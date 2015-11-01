@@ -24,7 +24,7 @@ func extractArchive(filename string, dest string) {
 			if err == io.EOF {
 				break
 			} else {
-				fmt.Printf("Error Next: %s\n", err)
+				fmt.Printf("Error Entry: %s\n", err)
 				break
 			}
 		}
