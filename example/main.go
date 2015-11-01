@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go-unarr"
+	"github.com/gen2brain/go-unarr"
 )
 
 func extractArchive(filename string, dest string) {
