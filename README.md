@@ -18,3 +18,7 @@ Install
 
     $ go get github.com/gen2brain/go-unarr
 
+Example
+-------
+
+    https://github.com/gen2brain/go-unarr/blob/master/example/main.go
