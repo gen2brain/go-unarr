@@ -21,4 +21,4 @@ Install
 Example
 -------
 
-    [example](https://github.com/gen2brain/go-unarr/blob/master/example/main.go)
+[example](https://github.com/gen2brain/go-unarr/blob/master/example/main.go)
