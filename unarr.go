@@ -7,7 +7,11 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 	"unsafe"
 )
@@ -42,7 +46,7 @@ func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 
 	a.stream = C.ar_open_memory(C.CBytes(b), C.size_t(cap(b)))
 	if a.stream == nil {
-		err = errors.New("unarr: Memory not found")
+		err = errors.New("unarr: Open memory failed")
 		return
 	}
 
@@ -147,4 +151,45 @@ func (a *Archive) ModTime() time.Time {
 func (a *Archive) Close() {
 	C.ar_close_archive(a.archive)
 	C.ar_close(a.stream)
+}
+
+// Extract extracts archive to destination path
+func (a *Archive) Extract(path string) {
+	for {
+		err := a.Entry()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				fmt.Printf("unarr: Error Entry: %s\n", err.Error())
+				break
+			}
+		}
+
+		name := a.Name()
+		size := a.Size()
+		buf := make([]byte, size)
+
+		for size > 0 {
+			n, err := a.Read(buf)
+			if err != nil && err != io.EOF {
+				break
+			}
+			size -= n
+		}
+
+		if size > 0 {
+			fmt.Printf("unarr: Error Read\n")
+			continue
+		}
+
+		dirname := filepath.Join(path, filepath.Dir(name))
+		os.MkdirAll(dirname, 0755)
+
+		err = ioutil.WriteFile(filepath.Join(dirname, filepath.Base(name)), buf, 0644)
+		if err != nil {
+			fmt.Printf("unarr: Error WriteFile: %s\n", err.Error())
+			continue
+		}
+	}
 }
