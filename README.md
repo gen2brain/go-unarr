@@ -15,7 +15,7 @@ unarr is a decompression library for RAR, TAR, ZIP and 7z archives.
 
 ## Example
 
-    a, err := unarr.NewArchive("test.rar")
+    a, err := unarr.NewArchive("test.7z")
     if err != nil {
         fmt.Printf("Error NewArchive: %s\n", err)
     }
