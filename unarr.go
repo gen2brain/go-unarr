@@ -1,13 +1,13 @@
 package unarr
 
+// #include <stdlib.h>
 // #include <unarr.h>
 // #cgo LDFLAGS: -lunarr
 import "C"
+
 import (
 	"errors"
 	"io"
-	"path/filepath"
-	"strings"
 	"time"
 	"unsafe"
 )
@@ -22,22 +22,40 @@ type Archive struct {
 func NewArchive(path string) (a *Archive, err error) {
 	a = new(Archive)
 
-	a.stream = C.ar_open_file(C.CString(path))
+	p := C.CString(path)
+	defer C.free(unsafe.Pointer(p))
+
+	a.stream = C.ar_open_file(p)
 	if a.stream == nil {
 		err = errors.New("unarr: File not found")
 		return
 	}
 
-	var deflatedOnly bool = false
-	ext := strings.ToLower(filepath.Ext(path))
-	if ext == ".xps" || ext == ".epub" {
-		// XPS and EPUB do not support non-Deflate compression methods by specification
-		deflatedOnly = true
+	err = a.Open()
+
+	return
+}
+
+// NewArchiveFromMemory returns new unarr Archive
+func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
+	a = new(Archive)
+
+	a.stream = C.ar_open_memory(C.CBytes(b), C.size_t(cap(b)))
+	if a.stream == nil {
+		err = errors.New("unarr: Memory not found")
+		return
 	}
 
+	err = a.Open()
+
+	return
+}
+
+// Open opens archive
+func (a *Archive) Open() (err error) {
 	a.archive = C.ar_open_rar_archive(a.stream)
 	if a.archive == nil {
-		a.archive = C.ar_open_zip_archive(a.stream, C.bool(deflatedOnly))
+		a.archive = C.ar_open_zip_archive(a.stream, C.bool(false))
 	}
 	if a.archive == nil {
 		a.archive = C.ar_open_7z_archive(a.stream)
@@ -80,7 +98,10 @@ func (a *Archive) EntryAt(off int64) error {
 
 // EntryFor reads the (first) archive entry associated with the given name
 func (a *Archive) EntryFor(name string) error {
-	r := bool(C.ar_parse_entry_for(a.archive, C.CString(name)))
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+
+	r := bool(C.ar_parse_entry_for(a.archive, n))
 	if !r {
 		return errors.New("unarr: Entry not found")
 	}
@@ -91,7 +112,7 @@ func (a *Archive) EntryFor(name string) error {
 // Read tries to read 'b' bytes into buffer, advancing the read offset pointer
 // returns the actual number of bytes read
 func (a *Archive) Read(b []byte) (n int, err error) {
-	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(cap(b))))
+	r := bool(C.ar_entry_uncompress(a.archive, C.CBytes(b), C.size_t(cap(b))))
 
 	n = len(b)
 	if !r || n == 0 {
