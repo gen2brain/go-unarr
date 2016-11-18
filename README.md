@@ -25,4 +25,4 @@ unarr is a decompression library for RAR, TAR, ZIP and 7z archives.
 
 ## Docs
 
-[docs on gowalker](https://gowalker.org/github.com/gen2brain/go-unarr)
+[docs on Go Walker](https://gowalker.org/github.com/gen2brain/go-unarr)
