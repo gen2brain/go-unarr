@@ -9,7 +9,7 @@ unarr is a decompression library for RAR, TAR, ZIP and 7z archives.
 
     $ go get -d github.com/gen2brain/go-unarr
     $ cd $GOPATH/src/github.com/gen2brain/go-unarr
-    $ ./make.bash # compile libunarr static library
+    $ sudo ./make.bash # compile and install libunarr static library
 
     $ go get github.com/gen2brain/go-unarr
 
@@ -22,3 +22,7 @@ unarr is a decompression library for RAR, TAR, ZIP and 7z archives.
     defer a.Close()
 
     a.Extract(os.TempDir())
+
+## Docs
+
+    [docs on gowalker](https://gowalker.org/github.com/gen2brain/go-unarr)
