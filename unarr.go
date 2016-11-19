@@ -116,7 +116,7 @@ func (a *Archive) EntryFor(name string) error {
 // Read tries to read 'b' bytes into buffer, advancing the read offset pointer
 // returns the actual number of bytes read
 func (a *Archive) Read(b []byte) (n int, err error) {
-	r := bool(C.ar_entry_uncompress(a.archive, C.CBytes(b), C.size_t(cap(b))))
+	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(cap(b))))
 
 	n = len(b)
 	if !r || n == 0 {
@@ -153,6 +153,27 @@ func (a *Archive) Close() {
 	C.ar_close(a.stream)
 }
 
+// ReadAll reads current entry and returns data
+func (a *Archive) ReadAll() ([]byte, error) {
+	size := a.Size()
+	b := make([]byte, size)
+
+	for size > 0 {
+		n, err := a.Read(b)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		size -= n
+	}
+
+	if size > 0 {
+		err := errors.New("unarr: Error Read")
+		return nil, err
+	}
+
+	return b, nil
+}
+
 // Extract extracts archive to destination path
 func (a *Archive) Extract(path string) {
 	for {
@@ -167,26 +188,16 @@ func (a *Archive) Extract(path string) {
 		}
 
 		name := a.Name()
-		size := a.Size()
-		buf := make([]byte, size)
-
-		for size > 0 {
-			n, err := a.Read(buf)
-			if err != nil && err != io.EOF {
-				break
-			}
-			size -= n
-		}
-
-		if size > 0 {
-			fmt.Printf("unarr: Error Read\n")
+		data, err := a.ReadAll()
+		if err != nil {
+			fmt.Printf(err.Error())
 			continue
 		}
 
 		dirname := filepath.Join(path, filepath.Dir(name))
 		os.MkdirAll(dirname, 0755)
 
-		err = ioutil.WriteFile(filepath.Join(dirname, filepath.Base(name)), buf, 0644)
+		err = ioutil.WriteFile(filepath.Join(dirname, filepath.Base(name)), data, 0644)
 		if err != nil {
 			fmt.Printf("unarr: Error WriteFile: %s\n", err.Error())
 			continue
