@@ -204,3 +204,25 @@ func (a *Archive) Extract(path string) {
 		}
 	}
 }
+
+// List lists the contents of archive
+func (a *Archive) List() []string {
+	var contents []string
+
+	for {
+		err := a.Entry()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				fmt.Printf("unarr: Error List: %s\n", err.Error())
+				continue
+			}
+		}
+
+		name := a.Name()
+		contents = append(contents, name)
+	}
+
+	return contents
+}
