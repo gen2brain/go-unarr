@@ -154,9 +154,11 @@ func (a *Archive) ModTime() time.Time {
 }
 
 // Close closes the underlying unarr archive
-func (a *Archive) Close() {
+func (a *Archive) Close() (err error) {
 	C.ar_close_archive(a.archive)
 	C.ar_close(a.stream)
+
+	return
 }
 
 // ReadAll reads current entry and returns data

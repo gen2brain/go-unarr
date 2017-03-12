@@ -222,7 +222,10 @@ func TestClose(t *testing.T) {
 			t.Error(err)
 		}
 
-		a.Close()
+		err = a.Close()
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }
 
