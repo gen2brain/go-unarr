@@ -78,7 +78,7 @@ func (a *Archive) open() (err error) {
 	return
 }
 
-// Entry reads the next archive entry
+// Entry reads the next archive entry.
 // io.EOF is returned when there is no more to be read from the archive
 func (a *Archive) Entry() error {
 	r := bool(C.ar_parse_entry(a.archive))
