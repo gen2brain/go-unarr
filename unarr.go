@@ -79,7 +79,8 @@ func (a *Archive) open() (err error) {
 }
 
 // Entry reads the next archive entry.
-// io.EOF is returned when there is no more to be read from the archive
+//
+// io.EOF is returned when there is no more to be read from the archive.
 func (a *Archive) Entry() error {
 	r := bool(C.ar_parse_entry(a.archive))
 	if !r {
@@ -117,8 +118,9 @@ func (a *Archive) EntryFor(name string) error {
 	return nil
 }
 
-// Read tries to read 'b' bytes into buffer, advancing the read offset pointer
-// returns the actual number of bytes read
+// Read tries to read 'b' bytes into buffer, advancing the read offset pointer.
+//
+// Returns the actual number of bytes read.
 func (a *Archive) Read(b []byte) (n int, err error) {
 	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(cap(b))))
 
