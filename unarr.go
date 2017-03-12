@@ -58,6 +58,18 @@ func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 	return
 }
 
+// NewArchiveFromReader returns new unarr Archive from io.Reader
+func NewArchiveFromReader(r io.Reader) (a *Archive, err error) {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return
+	}
+
+	a, err = NewArchiveFromMemory(b)
+
+	return
+}
+
 // open opens archive
 func (a *Archive) open() (err error) {
 	a.archive = C.ar_open_rar_archive(a.stream)

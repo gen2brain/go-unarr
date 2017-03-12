@@ -42,6 +42,22 @@ func TestNewArchiveFromMemory(t *testing.T) {
 	}
 }
 
+func TestNewArchiveFromReader(t *testing.T) {
+	for _, f := range files {
+		d, err := os.Open(filepath.Join("testdata", f))
+		if err != nil {
+			t.Error(err)
+		}
+
+		a, err := NewArchiveFromReader(d)
+		if err != nil {
+			t.Error(err)
+		}
+
+		a.Close()
+	}
+}
+
 func TestEntry(t *testing.T) {
 	for _, e := range exts {
 		a, err := NewArchive(filepath.Join("testdata", "test."+e))
