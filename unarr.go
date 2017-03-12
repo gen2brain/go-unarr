@@ -1,13 +1,14 @@
+// Package unarr is a decompression library for RAR, TAR, ZIP and 7z archives.
 package unarr
 
-// #include <stdlib.h>
-// #include <unarr.h>
-// #cgo LDFLAGS: -lunarr
+/*
+#include <stdlib.h>
+#include <unarr.h>
+*/
 import "C"
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -18,8 +19,10 @@ import (
 
 // Archive represents unarr archive
 type Archive struct {
-	stream  *C.ar_stream  // C stream struct
-	archive *C.ar_archive // C archive struct
+	// C stream struct
+	stream *C.ar_stream
+	// C archive struct
+	archive *C.ar_archive
 }
 
 // NewArchive returns new unarr Archive
@@ -35,28 +38,28 @@ func NewArchive(path string) (a *Archive, err error) {
 		return
 	}
 
-	err = a.Open()
+	err = a.open()
 
 	return
 }
 
-// NewArchiveFromMemory returns new unarr Archive
+// NewArchiveFromMemory returns new unarr Archive from byte slice
 func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 	a = new(Archive)
 
-	a.stream = C.ar_open_memory(C.CBytes(b), C.size_t(cap(b)))
+	a.stream = C.ar_open_memory(unsafe.Pointer(&b[0]), C.size_t(cap(b)))
 	if a.stream == nil {
 		err = errors.New("unarr: Open memory failed")
 		return
 	}
 
-	err = a.Open()
+	err = a.open()
 
 	return
 }
 
-// Open opens archive
-func (a *Archive) Open() (err error) {
+// open opens archive
+func (a *Archive) open() (err error) {
 	a.archive = C.ar_open_rar_archive(a.stream)
 	if a.archive == nil {
 		a.archive = C.ar_open_zip_archive(a.stream, C.bool(false))
@@ -83,10 +86,11 @@ func (a *Archive) Entry() error {
 		e := bool(C.ar_at_eof(a.archive))
 		if e {
 			return io.EOF
-		} else {
-			return errors.New("unarr: Failed to parse entry")
 		}
+
+		return errors.New("unarr: Failed to parse entry")
 	}
+
 	return nil
 }
 
@@ -175,48 +179,48 @@ func (a *Archive) ReadAll() ([]byte, error) {
 }
 
 // Extract extracts archive to destination path
-func (a *Archive) Extract(path string) {
+func (a *Archive) Extract(path string) (err error) {
 	for {
-		err := a.Entry()
-		if err != nil {
-			if err == io.EOF {
+		e := a.Entry()
+		if e != nil {
+			if e == io.EOF {
 				break
 			} else {
-				fmt.Printf("unarr: Error Entry: %s\n", err.Error())
-				break
+				err = e
+				return
 			}
 		}
 
 		name := a.Name()
-		data, err := a.ReadAll()
-		if err != nil {
-			fmt.Printf(err.Error())
-			continue
+		data, e := a.ReadAll()
+		if e != nil {
+			err = e
+			return
 		}
 
 		dirname := filepath.Join(path, filepath.Dir(name))
 		os.MkdirAll(dirname, 0755)
 
-		err = ioutil.WriteFile(filepath.Join(dirname, filepath.Base(name)), data, 0644)
-		if err != nil {
-			fmt.Printf("unarr: Error WriteFile: %s\n", err.Error())
-			continue
+		e = ioutil.WriteFile(filepath.Join(dirname, filepath.Base(name)), data, 0644)
+		if e != nil {
+			err = e
+			return
 		}
 	}
+
+	return
 }
 
 // List lists the contents of archive
-func (a *Archive) List() []string {
-	var contents []string
-
+func (a *Archive) List() (contents []string, err error) {
 	for {
-		err := a.Entry()
-		if err != nil {
-			if err == io.EOF {
+		e := a.Entry()
+		if e != nil {
+			if e == io.EOF {
 				break
 			} else {
-				fmt.Printf("unarr: Error List: %s\n", err.Error())
-				continue
+				err = e
+				return
 			}
 		}
 
@@ -224,5 +228,5 @@ func (a *Archive) List() []string {
 		contents = append(contents, name)
 	}
 
-	return contents
+	return
 }
