@@ -185,10 +185,10 @@ func (a *Archive) Extract(path string) (err error) {
 		if e != nil {
 			if e == io.EOF {
 				break
-			} else {
-				err = e
-				return
 			}
+
+			err = e
+			return
 		}
 
 		name := a.Name()
@@ -218,10 +218,10 @@ func (a *Archive) List() (contents []string, err error) {
 		if e != nil {
 			if e == io.EOF {
 				break
-			} else {
-				err = e
-				return
 			}
+
+			err = e
+			return
 		}
 
 		name := a.Name()
