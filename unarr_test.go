@@ -150,6 +150,40 @@ func TestRead(t *testing.T) {
 	}
 }
 
+func TestSeek(t *testing.T) {
+	for _, e := range exts {
+		a, err := NewArchive(filepath.Join("testdata", "test."+e))
+		if err != nil {
+			t.Error(err)
+		}
+
+		off, err := a.Seek(3, 0)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if off != 3 {
+			t.Error("Seek failed")
+		}
+
+		a.Close()
+	}
+}
+
+func TestClose(t *testing.T) {
+	for _, e := range exts {
+		a, err := NewArchive(filepath.Join("testdata", "test."+e))
+		if err != nil {
+			t.Error(err)
+		}
+
+		err = a.Close()
+		if err != nil {
+			t.Error(err)
+		}
+	}
+}
+
 func TestSize(t *testing.T) {
 	for _, f := range files {
 		a, err := NewArchive(filepath.Join("testdata", f))
@@ -228,20 +262,6 @@ func TestModTime(t *testing.T) {
 		}
 
 		a.Close()
-	}
-}
-
-func TestClose(t *testing.T) {
-	for _, e := range exts {
-		a, err := NewArchive(filepath.Join("testdata", "test."+e))
-		if err != nil {
-			t.Error(err)
-		}
-
-		err = a.Close()
-		if err != nil {
-			t.Error(err)
-		}
 	}
 }
 

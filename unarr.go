@@ -144,12 +144,32 @@ func (a *Archive) Read(b []byte) (n int, err error) {
 	return
 }
 
+// Seek moves the read offset pointer interpreted according to whence.
+//
+// Returns the new offset.
+func (a *Archive) Seek(offset int64, whence int) (int64, error) {
+	r := bool(C.ar_seek(a.stream, C.off64_t(offset), C.int(whence)))
+	if !r {
+		return 0, errors.New("unarr: Seek failed")
+	}
+
+	return int64(C.ar_tell(a.stream)), nil
+}
+
+// Close closes the underlying unarr archive
+func (a *Archive) Close() (err error) {
+	C.ar_close_archive(a.archive)
+	C.ar_close(a.stream)
+
+	return
+}
+
 // Size returns the total size of uncompressed data of the current entry
 func (a *Archive) Size() int {
 	return int(C.ar_entry_get_size(a.archive))
 }
 
-// Offset returns the stream offset of the current entry
+// Offset returns the stream offset of the current entry, for use with EntryAt
 func (a *Archive) Offset() int64 {
 	return int64(C.ar_entry_get_offset(a.archive))
 }
@@ -163,14 +183,6 @@ func (a *Archive) Name() string {
 func (a *Archive) ModTime() time.Time {
 	filetime := int64(C.ar_entry_get_filetime(a.archive))
 	return time.Unix((filetime/10000000)-11644473600, 0)
-}
-
-// Close closes the underlying unarr archive
-func (a *Archive) Close() (err error) {
-	C.ar_close_archive(a.archive)
-	C.ar_close(a.stream)
-
-	return
 }
 
 // ReadAll reads current entry and returns data
