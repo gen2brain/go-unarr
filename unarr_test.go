@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	exts  = []string{"zip", "rar", "7z"}
-	files = []string{"test.zip", "test.rar", "test.7z"}
+	exts  = []string{"zip", "rar", "7z", "tar"}
+	files = []string{"test.zip", "test.rar", "test.7z", "test.tar"}
 )
 
 func TestNewArchive(t *testing.T) {
