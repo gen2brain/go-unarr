@@ -9,6 +9,9 @@
 #include <string.h>
 
 #ifndef _MSC_VER
+#ifdef __forceinline
+#undef __forceinline
+#endif
 #define __forceinline inline
 #endif
 

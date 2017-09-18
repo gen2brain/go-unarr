@@ -18,16 +18,16 @@ typedef struct ar_stream_s ar_stream;
 
 /* opens a read-only stream for the given file path; returns NULL on error */
 ar_stream *ar_open_file(const char *path);
-#ifdef _WIN32
-ar_stream *ar_open_file_w(const wchar_t *path);
-#endif
+//#ifdef _WIN32
+//ar_stream *ar_open_file_w(const wchar_t *path);
+//#endif
 /* opens a read-only stream for the given chunk of memory; the pointer must be valid until ar_close is called */
 ar_stream *ar_open_memory(const void *data, size_t datalen);
-#ifdef _WIN32
-typedef struct IStream IStream;
-/* opens a read-only stream based on the given IStream */
-ar_stream *ar_open_istream(IStream *stream);
-#endif
+//#ifdef _WIN32
+//typedef struct IStream IStream;
+//[> opens a read-only stream based on the given IStream <]
+//ar_stream *ar_open_istream(IStream *stream);
+//#endif
 
 /* closes the stream and releases underlying resources */
 void ar_close(ar_stream *stream);
