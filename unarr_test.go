@@ -358,7 +358,11 @@ func TestExtractFromMemory(t *testing.T) {
 			t.Error(err)
 		}
 
-		a.Extract(tmpdir)
+		err = a.Extract(tmpdir)
+		if err != nil {
+			t.Error(err)
+		}
+
 		a.Close()
 	}
 }
@@ -389,12 +393,12 @@ func TestCorrupted(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer a.Close()
-
 	err = a.Entry()
 	if err == nil {
 		t.Error("Corrupted entry parsed")
 	}
+
+	a.Close()
 }
 
 func TestNotValid(t *testing.T) {
@@ -402,4 +406,39 @@ func TestNotValid(t *testing.T) {
 	if err == nil {
 		t.Error("Not valid archive opened")
 	}
+}
+
+func TestExtractCorrupted(t *testing.T) {
+	tmpdir, err := ioutil.TempDir(os.TempDir(), "unarr")
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer os.RemoveAll(tmpdir)
+
+	a, err := NewArchive(filepath.Join("testdata", "test_corrupted.zip"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = a.Extract(tmpdir)
+	if err == nil {
+		t.Error("Corrupted archive extracted")
+	}
+
+	a.Close()
+}
+
+func TestListCorrupted(t *testing.T) {
+	a, err := NewArchive(filepath.Join("testdata", "test_corrupted.zip"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = a.List()
+	if err == nil {
+		t.Error("Corrupted archive listed")
+	}
+
+	a.Close()
 }
