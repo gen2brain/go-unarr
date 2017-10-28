@@ -382,3 +382,24 @@ func TestList(t *testing.T) {
 		a.Close()
 	}
 }
+
+func TestCorrupted(t *testing.T) {
+	a, err := NewArchive(filepath.Join("testdata", "test_corrupted.zip"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer a.Close()
+
+	err = a.Entry()
+	if err == nil {
+		t.Error("Corrupted entry parsed")
+	}
+}
+
+func TestNotValid(t *testing.T) {
+	_, err := NewArchive(filepath.Join("testdata", "test_notvalid.zip"))
+	if err == nil {
+		t.Error("Not valid archive opened")
+	}
+}
