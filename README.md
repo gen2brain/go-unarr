@@ -1,6 +1,6 @@
 ## go-unarr
 [![TravisCI Build Status](https://travis-ci.org/gen2brain/go-unarr.svg?branch=master)](https://travis-ci.org/gen2brain/go-unarr) 
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/qv2iggrqtgl7xhr0?svg=true)](https://ci.appveyor.com/project/gen2brain/raylib-go)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/vawnh8s1j3w6la9t?svg=true)](https://ci.appveyor.com/project/gen2brain/go-unarr)
 [![GoDoc](https://godoc.org/github.com/gen2brain/go-unarr?status.svg)](https://godoc.org/github.com/gen2brain/go-unarr) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/gen2brain/go-unarr?branch=master)](https://goreportcard.com/report/github.com/gen2brain/go-unarr) 
 [![Go Cover](http://gocover.io/_badge/github.com/gen2brain/go-unarr)](http://gocover.io/github.com/gen2brain/go-unarr)
