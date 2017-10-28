@@ -189,6 +189,8 @@ func (a *Archive) ModTime() time.Time {
 // ReadAll reads current entry and returns data
 func (a *Archive) ReadAll() ([]byte, error) {
 	size := a.Size()
+	read := size
+
 	b := make([]byte, size)
 
 	for size > 0 {
@@ -196,10 +198,15 @@ func (a *Archive) ReadAll() ([]byte, error) {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
+
 		size -= n
+
+		if err != io.EOF {
+			read -= n
+		}
 	}
 
-	if size > 0 {
+	if read > 0 {
 		err := errors.New("unarr: Error Read")
 		return nil, err
 	}
