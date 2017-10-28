@@ -57,6 +57,21 @@ if err != nil {
 }
 ```
 
+##### Read first 8 bytes of the entry
+```go
+err := a.Entry()
+if err != nil {
+    panic(err)
+}
+
+data := make([]byte, 8)
+
+n, err := a.Read(data)
+if err != nil {
+    panic(err)
+}
+```
+
 ##### Read all entries from archive
 ```go
 for {
