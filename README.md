@@ -13,7 +13,7 @@ unarr is a decompression library for RAR, TAR, ZIP and 7z archives.
 
     go get -v github.com/gen2brain/go-unarr
 
-### Example
+### Examples
 
 ##### Open archive
 ```go
@@ -32,6 +32,13 @@ if err != nil {
 }
 
 data, err := a.ReadAll()
+if err != nil {
+    panic(err)
+}
+```
+##### List contents of archive
+```go
+list, err := a.List()
 if err != nil {
     panic(err)
 }
