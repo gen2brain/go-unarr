@@ -1,4 +1,8 @@
-## go-unarr [![Build Status](https://travis-ci.org/gen2brain/go-unarr.svg?branch=master)](https://travis-ci.org/gen2brain/go-unarr) [![GoDoc](https://godoc.org/github.com/gen2brain/go-unarr?status.svg)](https://godoc.org/github.com/gen2brain/go-unarr) [![Go Report Card](https://goreportcard.com/badge/github.com/gen2brain/go-unarr?branch=master)](https://goreportcard.com/report/github.com/gen2brain/go-unarr) [![Go Cover](http://gocover.io/_badge/github.com/gen2brain/go-unarr)](http://gocover.io/github.com/gen2brain/go-unarr)
+## go-unarr
+[![Build Status](https://travis-ci.org/gen2brain/go-unarr.svg?branch=master)](https://travis-ci.org/gen2brain/go-unarr) 
+[![GoDoc](https://godoc.org/github.com/gen2brain/go-unarr?status.svg)](https://godoc.org/github.com/gen2brain/go-unarr) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/gen2brain/go-unarr?branch=master)](https://goreportcard.com/report/github.com/gen2brain/go-unarr) 
+[![Go Cover](http://gocover.io/_badge/github.com/gen2brain/go-unarr)](http://gocover.io/github.com/gen2brain/go-unarr)
 
 Golang bindings for the [unarr](https://github.com/sumatrapdfreader/sumatrapdf/tree/master/ext/unarr) library from sumatrapdf.
 
