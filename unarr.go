@@ -60,8 +60,9 @@ func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 
 // NewArchiveFromReader returns new unarr Archive from io.Reader
 func NewArchiveFromReader(r io.Reader) (a *Archive, err error) {
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
+	b, e := ioutil.ReadAll(r)
+	if e != nil {
+		err = e
 		return
 	}
 
