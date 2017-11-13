@@ -85,6 +85,8 @@ func (a *Archive) open() (err error) {
 	}
 
 	if a.archive == nil {
+		C.ar_close(a.stream)
+
 		err = errors.New("unarr: No valid RAR, ZIP, 7Z or TAR archive")
 	}
 
