@@ -49,6 +49,7 @@ package unarr
 #include "external/unarr/tar/parse-tar.c"
 #include "external/unarr/zip/inflate.c"
 
-#cgo CFLAGS: -DHAVE_7Z -DHAVE_ZLIB -DHAVE_BZIP2 -D_7ZIP_PPMD_SUPPPORT -Iexternal/lzma -Iexternal/zlib -Iexternal/bzip2 -Iexternal/unarr -pipe -O3 -DNDEBUG -fomit-frame-pointer
+#cgo !debug CFLAGS: -DNDEBUG
+#cgo CFLAGS: -DHAVE_7Z -DHAVE_ZLIB -DHAVE_BZIP2 -D_7ZIP_PPMD_SUPPPORT -Iexternal/lzma -Iexternal/zlib -Iexternal/bzip2 -Iexternal/unarr -pipe -O3 -fomit-frame-pointer
 */
 import "C"
