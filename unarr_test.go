@@ -358,7 +358,7 @@ func TestExtractFromMemory(t *testing.T) {
 			t.Error(err)
 		}
 
-		err = a.Extract(tmpdir)
+		_, err = a.Extract(tmpdir)
 		if err != nil {
 			t.Error(err)
 		}
@@ -421,7 +421,7 @@ func TestExtractCorrupted(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = a.Extract(tmpdir)
+	_, err = a.Extract(tmpdir)
 	if err == nil {
 		t.Error("Corrupted archive extracted")
 	}
