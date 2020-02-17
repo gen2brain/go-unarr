@@ -217,7 +217,7 @@ func (a *Archive) ReadAll() ([]byte, error) {
 }
 
 // Extract extracts archive to destination path
-func (a *Archive) Extract(path string) (err error) {
+func (a *Archive) Extract(path string) (contents []string, err error) {
 	for {
 		e := a.Entry()
 		if e != nil {
@@ -230,6 +230,7 @@ func (a *Archive) Extract(path string) (err error) {
 		}
 
 		name := a.Name()
+		contents = append(contents, name)
 		data, e := a.ReadAll()
 		if e != nil {
 			err = e
