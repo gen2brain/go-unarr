@@ -7,13 +7,35 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-  - env:
+  - id: unarr-win-x64
+    # brew install mingw-w64
+    main: ./cmd/unarr/unarr.go
+    env:
       - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+    goarch:
+      - amd64
+    goos:
+      - windows
+  - id: unarr-linux-x64
+    # brew install FiloSottile/musl-cross/musl-cross
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-linux-musl-gcc
+    flags:
+      - "-ldflags"
+      - '-extldflags "-static"'
     goos:
       - linux
-      - windows
-      - darwin
+    goarch:
+      - amd64
+  - id: unarr-darwin-x64
     main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
 archives:
   - replacements:
       darwin: Darwin
