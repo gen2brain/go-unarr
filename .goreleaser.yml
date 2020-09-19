@@ -1,23 +1,22 @@
-# This is an example goreleaser.yaml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
+project_name: unarr
+
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod download
-    # you may remove this if you don't need go generate
-    - go generate ./...
 builds:
   - id: unarr-win-x64
+    binary: "{{ .ProjectName }}"
     # brew install mingw-w64
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
       - CC=x86_64-w64-mingw32-gcc
-    goarch:
-      - amd64
     goos:
       - windows
+    goarch:
+      - amd64
   - id: unarr-linux-x64
+    binary: "{{ .ProjectName }}"
     # brew install FiloSottile/musl-cross/musl-cross
     main: ./cmd/unarr/unarr.go
     env:
@@ -31,17 +30,23 @@ builds:
     goarch:
       - amd64
   - id: unarr-darwin-x64
+    binary: "{{ .ProjectName }}"
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
+      # comment CC line if releasing from macOS
+      - CC=x86_64-apple-darwin14-clang
     goos:
       - darwin
+    goarch:
+      - amd64
 archives:
-  - replacements:
+  - id: archive
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    replacements:
       darwin: Darwin
       linux: Linux
       windows: Windows
-      386: i386
       amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
