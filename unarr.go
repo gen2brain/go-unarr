@@ -48,7 +48,7 @@ func NewArchive(path string) (a *Archive, err error) {
 func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 	a = new(Archive)
 
-	a.stream = C.ar_open_memory(unsafe.Pointer(&b[0]), C.size_t(cap(b)))
+	a.stream = C.ar_open_memory(unsafe.Pointer(&b[0]), C.size_t(len(b)))
 	if a.stream == nil {
 		err = errors.New("unarr: Open memory failed")
 		return
@@ -138,7 +138,7 @@ func (a *Archive) EntryFor(name string) error {
 //
 // Returns the actual number of bytes read.
 func (a *Archive) Read(b []byte) (n int, err error) {
-	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(cap(b))))
+	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(len(b))))
 
 	n = len(b)
 	if !r || n == 0 {
