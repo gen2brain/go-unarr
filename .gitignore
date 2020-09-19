@@ -1,0 +1,5 @@
+/cmd/unarr/unarr
+/unarr
+
+.DS_Store
+.*.sw*

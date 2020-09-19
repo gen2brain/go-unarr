@@ -1,0 +1,55 @@
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod download
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+  - id: unarr-win-x64
+    # brew install mingw-w64
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+    goarch:
+      - amd64
+    goos:
+      - windows
+  - id: unarr-linux-x64
+    # brew install FiloSottile/musl-cross/musl-cross
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-linux-musl-gcc
+    flags:
+      - "-ldflags"
+      - '-extldflags "-static"'
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - id: unarr-darwin-x64
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
