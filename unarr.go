@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -190,27 +191,25 @@ func (a *Archive) ModTime() time.Time {
 
 // ReadAll reads current entry and returns data
 func (a *Archive) ReadAll() ([]byte, error) {
-	size := a.Size()
-	read := size
+	var err error
+	var n int
 
+	size := a.Size()
 	b := make([]byte, size)
 
 	for size > 0 {
-		n, err := a.Read(b)
-		if err != nil && err != io.EOF {
-			return nil, err
+		n, err = a.Read(b)
+		if err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
 		}
 
 		size -= n
-
-		if err != io.EOF {
-			read -= n
-		}
 	}
 
-	if read > 0 {
-		err := errors.New("unarr: Error Read")
-		return nil, err
+	if size > 0 {
+		return nil, fmt.Errorf("unarr read failure: %w", err)
 	}
 
 	return b, nil
