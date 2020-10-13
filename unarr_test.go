@@ -442,3 +442,24 @@ func TestListCorrupted(t *testing.T) {
 
 	a.Close()
 }
+
+/*
+func TestReadAllWrongSize(t *testing.T) {
+	a, err := NewArchive(filepath.Join("testdata", "test_wrongsize.zip"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = a.Entry()
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = a.ReadAll()
+	if err == nil {
+		t.Error("Wrong size archive readed")
+	}
+
+	a.Close()
+}
+*/
