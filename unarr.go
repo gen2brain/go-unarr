@@ -9,7 +9,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -48,7 +47,8 @@ func NewArchive(path string) (a *Archive, err error) {
 func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 	a = new(Archive)
 
-	a.stream = C.ar_open_memory(unsafe.Pointer(&b[0]), C.size_t(len(b)))
+	n := len(b)
+	a.stream = C.ar_open_memory(unsafe.Pointer(&b[0]), C.size_t(n))
 	if a.stream == nil {
 		err = errors.New("unarr: Open memory failed")
 		return
@@ -138,7 +138,10 @@ func (a *Archive) EntryFor(name string) error {
 //
 // Returns the actual number of bytes read.
 func (a *Archive) Read(b []byte) (n int, err error) {
-	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(len(b))))
+	// TODO capture size info on Entry() and escalate non-EOF read errors here
+	// instead of in ReadAll()
+	n = len(b)
+	r := bool(C.ar_entry_uncompress(a.archive, unsafe.Pointer(&b[0]), C.size_t(n)))
 
 	n = len(b)
 	if !r || n == 0 {
@@ -191,25 +194,28 @@ func (a *Archive) ModTime() time.Time {
 
 // ReadAll reads current entry and returns data
 func (a *Archive) ReadAll() ([]byte, error) {
-	var err error
-	var n int
-
 	size := a.Size()
+	read := size
+
 	b := make([]byte, size)
 
 	for size > 0 {
-		n, err = a.Read(b)
-		if err != nil {
-			if err != io.EOF {
-				return nil, err
-			}
+		// this Read comes from C, not Go
+		n, err := a.Read(b)
+		if err != nil && err != io.EOF {
+			return nil, err
 		}
 
 		size -= n
+
+		if err != io.EOF {
+			read -= n
+		}
 	}
 
-	if size > 0 {
-		return nil, fmt.Errorf("unarr read failure: %w", err)
+	if read > 0 {
+		err := errors.New("unarr: Error Read")
+		return nil, err
 	}
 
 	return b, nil
