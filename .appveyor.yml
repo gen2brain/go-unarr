@@ -11,6 +11,8 @@ environment:
   GOARCH: 386
   CC: i686-w64-mingw32-gcc
 
+stack: go 1.14
+
 install:
   - echo %GOPATH%
   - echo %MSYS_PATH%
