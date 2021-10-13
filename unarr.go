@@ -168,9 +168,14 @@ func (a *Archive) Offset() int64 {
 	return int64(unarrc.EntryGetOffset(a.archive))
 }
 
-// Name returns the name of the current entry
+// Name returns the name of the current entry as UTF-8 string
 func (a *Archive) Name() string {
 	return unarrc.EntryGetName(a.archive)
+}
+
+// RawName returns the name of the current entry as raw string
+func (a *Archive) RawName() string {
+	return unarrc.EntryGetRawName(a.archive)
 }
 
 // ModTime returns the stored modification time of the current entry
