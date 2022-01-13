@@ -1,5 +1,5 @@
 /* Bra.c -- Converters for RISC code
-2017-04-04 : Igor Pavlov : Public domain */
+2021-02-09 : Igor Pavlov : Public domain */
 
 #include "Precomp.h"
 
@@ -22,7 +22,7 @@ SizeT ARM_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
     for (;;)
     {
       if (p >= lim)
-        return p - data;
+        return (SizeT)(p - data);
       p += 4;
       if (p[-1] == 0xEB)
         break;
@@ -43,7 +43,7 @@ SizeT ARM_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
     for (;;)
     {
       if (p >= lim)
-        return p - data;
+        return (SizeT)(p - data);
       p += 4;
       if (p[-1] == 0xEB)
         break;
@@ -70,7 +70,7 @@ SizeT ARMT_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
   lim = data + size - 4;
 
   if (encoding)
-
+  
   for (;;)
   {
     UInt32 b1;
@@ -78,7 +78,7 @@ SizeT ARMT_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
     {
       UInt32 b3;
       if (p > lim)
-        return p - data;
+        return (SizeT)(p - data);
       b1 = p[1];
       b3 = p[3];
       p += 2;
@@ -105,7 +105,7 @@ SizeT ARMT_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
       p[-1] = (Byte)(0xF8 | (v >> 8));
     }
   }
-
+  
   for (;;)
   {
     UInt32 b1;
@@ -113,7 +113,7 @@ SizeT ARMT_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
     {
       UInt32 b3;
       if (p > lim)
-        return p - data;
+        return (SizeT)(p - data);
       b1 = p[1];
       b3 = p[3];
       p += 2;
@@ -138,7 +138,7 @@ SizeT ARMT_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
       SetUi16(p - 4, (UInt16)(((v >> 11) & 0x7FF) | 0xF000));
       SetUi16(p - 2, (UInt16)(v | 0xF800));
       */
-
+      
       p[-4] = (Byte)(v >> 11);
       p[-3] = (Byte)(0xF0 | ((v >> 19) & 0x7));
       p[-2] = (Byte)v;
@@ -162,7 +162,7 @@ SizeT PPC_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
     for (;;)
     {
       if (p >= lim)
-        return p - data;
+        return (SizeT)(p - data);
       p += 4;
       /* if ((v & 0xFC000003) == 0x48000001) */
       if ((p[-4] & 0xFC) == 0x48 && (p[-1] & 3) == 1)
@@ -196,7 +196,7 @@ SizeT SPARC_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
     for (;;)
     {
       if (p >= lim)
-        return p - data;
+        return (SizeT)(p - data);
       /*
       v = GetBe32(p);
       p += 4;
@@ -218,7 +218,7 @@ SizeT SPARC_Convert(Byte *data, SizeT size, UInt32 ip, int encoding)
         v += ip + (UInt32)(p - data);
       else
         v -= ip + (UInt32)(p - data);
-
+      
       v &= 0x01FFFFFF;
       v -= (UInt32)1 << 24;
       v ^= 0xFF000000;

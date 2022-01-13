@@ -141,14 +141,6 @@ struct ByteReader {
     ar_archive_rar *rar;
 };
 
-struct CPpmdRAR_RangeDec {
-    IPpmd7_RangeDec super;
-    UInt32 Range;
-    UInt32 Code;
-    UInt32 Low;
-    IByteIn *Stream;
-};
-
 struct ar_archive_rar_uncomp_v3 {
     struct huffman_code maincode;
     struct huffman_code offsetcode;
@@ -164,7 +156,6 @@ struct ar_archive_rar_uncomp_v3 {
     bool is_ppmd_block;
     int ppmd_escape;
     CPpmd7 ppmd7_context;
-    struct CPpmdRAR_RangeDec range_dec;
     struct ByteReader bytein;
 
     struct ar_archive_rar_filters filters;
