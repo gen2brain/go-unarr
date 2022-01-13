@@ -400,7 +400,7 @@ static uint32_t zip_uncompress_data_ppmd(struct ar_archive_zip_uncomp *uncomp, v
 #endif
         if (!Ppmd8_Alloc(&uncomp->state.ppmd8.ctx, (size + 1) << 20, &uncomp->state.ppmd8.alloc))
             return ERR_UNCOMP;
-        if (!Ppmd8_RangeDec_Init(&uncomp->state.ppmd8.ctx))
+        if (!Ppmd8_Init_RangeDec(&uncomp->state.ppmd8.ctx))
             return ERR_UNCOMP;
         Ppmd8_Init(&uncomp->state.ppmd8.ctx, order, method);
     }
