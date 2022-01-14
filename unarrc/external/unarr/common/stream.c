@@ -59,7 +59,7 @@ static size_t file_read(void *data, void *buffer, size_t count)
 
 static bool file_seek(void *data, off64_t offset, int origin)
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return _fseeki64(data, offset, origin) == 0;
 #else
 #if _POSIX_C_SOURCE >= 200112L
@@ -74,7 +74,7 @@ static bool file_seek(void *data, off64_t offset, int origin)
 
 static off64_t file_tell(void *data)
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return _ftelli64(data);
 #elif _POSIX_C_SOURCE >= 200112L
     return ftello(data);
