@@ -9,6 +9,13 @@
 #include <string.h>
 
 #ifndef _MSC_VER
+#ifdef __forceinline
+#define FORCE_INLINE_OVERRIDE
+#endif
+#ifdef FORCE_INLINE_OVERRIDE
+#pragma push_macro("__forceinline")
+#undef __forceinline
+#endif
 #define __forceinline inline
 #endif
 
@@ -482,3 +489,7 @@ int inflate_flush(inflate_state *state, unsigned char data_in[8])
     state->in.available = keep;
     return count;
 }
+
+#ifdef FORCE_INLINE_OVERRIDE
+#pragma pop_macro("__forceinline")
+#endif
