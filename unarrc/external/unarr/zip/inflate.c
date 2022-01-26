@@ -8,15 +8,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifndef _MSC_VER
-#ifdef __forceinline
-#define FORCE_INLINE_OVERRIDE
-#endif
-#ifdef FORCE_INLINE_OVERRIDE
-#pragma push_macro("__forceinline")
-#undef __forceinline
-#endif
-#define __forceinline inline
+#ifdef _MSC_VER
+#define MY_FORCE_INLINE __forceinline
+#else
+#define MY_FORCE_INLINE inline __attribute__((always_inline))
 #endif
 
 #define MAX_BITS 16
@@ -102,7 +97,7 @@ static const struct {
 
 static const int table_code_length_idxs[19] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
 
-static __forceinline bool br_ensure(inflate_state *state, int bits)
+static MY_FORCE_INLINE bool br_ensure(inflate_state *state, int bits)
 {
     while (state->in.available < bits) {
         if (*state->in.avail_in == 0)
@@ -114,7 +109,7 @@ static __forceinline bool br_ensure(inflate_state *state, int bits)
     return true;
 }
 
-static __forceinline uint64_t br_bits(inflate_state *state, int bits)
+static MY_FORCE_INLINE uint64_t br_bits(inflate_state *state, int bits)
 {
     uint64_t res = state->in.bits & (((uint64_t)1 << bits) - 1);
     state->in.available -= bits;
@@ -122,7 +117,7 @@ static __forceinline uint64_t br_bits(inflate_state *state, int bits)
     return res;
 }
 
-static __forceinline void output(inflate_state *state, uint8_t value)
+static MY_FORCE_INLINE void output(inflate_state *state, uint8_t value)
 {
     *state->out.data_out++ = value;
     (*state->out.avail_out)--;
