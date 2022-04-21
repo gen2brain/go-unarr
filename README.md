@@ -15,7 +15,7 @@ See <https://pkg.go.dev/github.com/gen2brain/go-unarr>
 ## Install CLI
 
 ```bash
-go get github.com/gen2brain/go-unarr/cmd/unarr
+go install github.com/gen2brain/go-unarr/cmd/unarr@latest
 ```
 
 #### Example
