@@ -13,15 +13,6 @@ type Stream C.ar_stream
 // Archive .
 type Archive C.ar_archive
 
-// OpenFile .
-func OpenFile(path string) *Stream {
-	cpath := C.CString(path)
-	defer C.free(unsafe.Pointer(cpath))
-	ret := C.ar_open_file(cpath)
-	v := *(**Stream)(unsafe.Pointer(&ret))
-	return v
-}
-
 // OpenMemory .
 func OpenMemory(data unsafe.Pointer, datalen uint) *Stream {
 	cdata := data
