@@ -35,7 +35,7 @@ builds:
     env:
       - CGO_ENABLED=1
       # comment CC line if releasing from macOS
-      - CC=x86_64-apple-darwin19-clang
+      - CC=x86_64-apple-darwin21.1-clang
     goos:
       - darwin
     goarch:
