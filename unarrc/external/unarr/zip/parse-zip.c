@@ -8,7 +8,7 @@
 #endif
 
 static inline uint16_t uint16le(unsigned char *data) { return data[0] | data[1] << 8; }
-static inline uint32_t uint32le(unsigned char *data) { return data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24; }
+static inline uint32_t uint32le(unsigned char *data) { return data[0] | data[1] << 8 | data[2] << 16 | (uint32_t) data[3] << 24; }
 static inline uint64_t uint64le(unsigned char *data) { return (uint64_t)uint32le(data) | (uint64_t)uint32le(data + 4) << 32; }
 
 bool zip_seek_to_compressed_data(ar_archive_zip *zip)
@@ -38,7 +38,6 @@ bool zip_seek_to_compressed_data(ar_archive_zip *zip)
 static bool zip_parse_extra_fields(ar_archive_zip *zip, struct zip_entry *entry)
 {
     uint8_t *extra;
-    uint32_t idx;
 
     if (!entry->extralen)
         return true;
@@ -51,9 +50,14 @@ static bool zip_parse_extra_fields(ar_archive_zip *zip, struct zip_entry *entry)
         free(extra);
         return false;
     }
-    for (idx = 0; idx + 4 < entry->extralen; idx += 4 + uint16le(&extra[idx + 2])) {
+    for (uint32_t idx = 0; idx + 4 < entry->extralen; idx += 4 + uint16le(&extra[idx + 2])) {
         if (uint16le(&extra[idx]) == 0x0001) {
             uint16_t size = uint16le(&extra[idx + 2]);
+            if (size + idx + 1 > entry->extralen) {
+                free(extra);
+                return false;
+            }
+
             uint16_t offset = 0;
             if (entry->uncompressed == UINT32_MAX && offset + 8 <= size) {
                 entry->uncompressed = uint64le(&extra[idx + 4 + offset]);

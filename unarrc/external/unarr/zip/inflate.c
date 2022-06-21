@@ -9,9 +9,9 @@
 #include <string.h>
 
 #ifdef _MSC_VER
-#define MY_FORCE_INLINE __forceinline
+#define UNARR_FORCE_INLINE __forceinline
 #else
-#define MY_FORCE_INLINE inline __attribute__((always_inline))
+#define UNARR_FORCE_INLINE inline __attribute__((always_inline))
 #endif
 
 #define MAX_BITS 16
@@ -97,7 +97,7 @@ static const struct {
 
 static const int table_code_length_idxs[19] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
 
-static MY_FORCE_INLINE bool br_ensure(inflate_state *state, int bits)
+static UNARR_FORCE_INLINE bool br_ensure(inflate_state *state, int bits)
 {
     while (state->in.available < bits) {
         if (*state->in.avail_in == 0)
@@ -109,7 +109,7 @@ static MY_FORCE_INLINE bool br_ensure(inflate_state *state, int bits)
     return true;
 }
 
-static MY_FORCE_INLINE uint64_t br_bits(inflate_state *state, int bits)
+static UNARR_FORCE_INLINE uint64_t br_bits(inflate_state *state, int bits)
 {
     uint64_t res = state->in.bits & (((uint64_t)1 << bits) - 1);
     state->in.available -= bits;
@@ -117,7 +117,7 @@ static MY_FORCE_INLINE uint64_t br_bits(inflate_state *state, int bits)
     return res;
 }
 
-static MY_FORCE_INLINE void output(inflate_state *state, uint8_t value)
+static UNARR_FORCE_INLINE void output(inflate_state *state, uint8_t value)
 {
     *state->out.data_out++ = value;
     (*state->out.avail_out)--;
@@ -174,7 +174,7 @@ static bool tree_add_value(struct tree *tree, int key, int bits, int value)
     return true;
 }
 
-static MY_FORCE_INLINE int tree_get_value(inflate_state *state, const struct tree *tree, bool not_fast)
+static UNARR_FORCE_INLINE int tree_get_value(inflate_state *state, const struct tree *tree, bool not_fast)
 {
     if (state->state.tree_idx == 0) {
         int key = state->in.bits & ((1 << TREE_FAST_BITS) - 1);

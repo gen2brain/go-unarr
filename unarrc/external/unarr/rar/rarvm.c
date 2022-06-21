@@ -49,6 +49,8 @@ bool RARProgramAddInstr(RARProgram *prog, uint8_t instruction, bool bytemode)
     if (prog->length + 1 >= prog->capacity) {
         /* in my small file sample, 16 is the value needed most often */
         uint32_t newCapacity = prog->capacity ? prog->capacity * 4 : 32;
+        if (!prog->opcodes)
+            return false;
         RAROpcode *newCodes = calloc(newCapacity, sizeof(*prog->opcodes));
         if (!newCodes)
             return false;

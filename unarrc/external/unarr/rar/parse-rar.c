@@ -7,7 +7,7 @@
 
 static inline uint8_t uint8le(unsigned char *data) { return data[0]; }
 static inline uint16_t uint16le(unsigned char *data) { return data[0] | data[1] << 8; }
-static inline uint32_t uint32le(unsigned char *data) { return data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24; }
+static inline uint32_t uint32le(unsigned char *data) { return data[0] | data[1] << 8 | data[2] << 16 | (uint32_t)data[3] << 24; }
 
 bool rar_parse_header(ar_archive *ar, struct rar_header *header)
 {

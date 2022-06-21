@@ -652,8 +652,8 @@ bool rar_run_filters(ar_archive_rar *rar)
     uint32_t lastfilterlength;
 
     filters->filterstart = SIZE_MAX;
-    end = (size_t)rar_expand(rar, end);
-    if (end != start + filter->blocklength) {
+
+    if ((size_t)rar_expand(rar, end) != end) {
         warn("Failed to expand the expected amout of bytes");
         return false;
     }
