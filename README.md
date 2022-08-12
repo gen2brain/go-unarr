@@ -134,7 +134,7 @@ for {
 #### Extract contents of archive to destination path
 
 ```go
-err := a.Extract("/tmp/path")
+_, err := a.Extract("/tmp/path")
 if err != nil {
     panic(err)
 }
