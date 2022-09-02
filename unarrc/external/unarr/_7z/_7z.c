@@ -45,6 +45,7 @@ static void _7z_close(ar_archive *ar)
     free(_7z->entry_name);
     SzArEx_Free(&_7z->data, &gSzAlloc);
     IAlloc_Free(&gSzAlloc, _7z->uncomp.buffer);
+    IAlloc_Free(&gSzAlloc, _7z->look_stream.buf);
 }
 
 static const char *_7z_get_name(ar_archive *ar, bool raw);

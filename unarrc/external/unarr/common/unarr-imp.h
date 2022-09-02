@@ -43,8 +43,11 @@ struct ar_stream_s {
 ar_stream *ar_open_stream(void *data, ar_stream_close_fn close, ar_stream_read_fn read, ar_stream_seek_fn seek, ar_stream_tell_fn tell);
 
 /***** unarr *****/
-
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #define warn(...) ar_log("!", __FILE__, __LINE__, __VA_ARGS__)
+#else
+#define warn(...) ((void)0)
+#endif
 #ifndef NDEBUG
 #define log(...) ar_log("-", __FILE__, __LINE__, __VA_ARGS__)
 #else
