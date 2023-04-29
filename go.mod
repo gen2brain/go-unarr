@@ -1,3 +1,3 @@
 module github.com/gen2brain/go-unarr
 
-go 1.14
+go 1.18
