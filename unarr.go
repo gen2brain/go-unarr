@@ -3,7 +3,6 @@ package unarr
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,6 +12,17 @@ import (
 	"unsafe"
 
 	"github.com/gen2brain/go-unarr/unarrc"
+)
+
+var (
+	ErrOpenFile    = errors.New("unarr: open file failed")
+	ErrOpenMemory  = errors.New("unarr: open memory failed")
+	ErrOpenArchive = errors.New("unarr: no valid RAR, ZIP, 7Z or TAR archive")
+	ErrEntry       = errors.New("unarr: failed to parse entry")
+	ErrEntryAt     = errors.New("unarr: failed to parse entry at")
+	ErrEntryFor    = errors.New("unarr: failed to parse entry for")
+	ErrSeek        = errors.New("unarr: seek failed")
+	ErrRead        = errors.New("unarr: read failure")
 )
 
 // Archive represents unarr archive
@@ -29,7 +39,7 @@ func NewArchive(path string) (a *Archive, err error) {
 
 	a.stream = unarrc.OpenFile(path)
 	if a.stream == nil {
-		err = errors.New("unarr: File not found")
+		err = ErrOpenFile
 		return
 	}
 
@@ -44,7 +54,7 @@ func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 
 	a.stream = unarrc.OpenMemory(unsafe.Pointer(&b[0]), uint(len(b)))
 	if a.stream == nil {
-		err = errors.New("unarr: Open memory failed")
+		err = ErrOpenMemory
 		return
 	}
 
@@ -82,7 +92,7 @@ func (a *Archive) open() (err error) {
 	if a.archive == nil {
 		unarrc.Close(a.stream)
 
-		err = errors.New("unarr: No valid RAR, ZIP, 7Z or TAR archive")
+		err = ErrOpenArchive
 	}
 
 	return
@@ -99,7 +109,7 @@ func (a *Archive) Entry() error {
 			return io.EOF
 		}
 
-		return errors.New("unarr: Failed to parse entry")
+		return ErrEntry
 	}
 
 	return nil
@@ -109,7 +119,7 @@ func (a *Archive) Entry() error {
 func (a *Archive) EntryAt(off int64) error {
 	r := unarrc.ParseEntryAt(a.archive, off)
 	if !r {
-		return errors.New("unarr: Failed to parse entry at")
+		return ErrEntryAt
 	}
 
 	return nil
@@ -119,7 +129,7 @@ func (a *Archive) EntryAt(off int64) error {
 func (a *Archive) EntryFor(name string) error {
 	r := unarrc.ParseEntryFor(a.archive, name)
 	if !r {
-		return errors.New("unarr: Entry not found")
+		return ErrEntryFor
 	}
 
 	return nil
@@ -145,7 +155,7 @@ func (a *Archive) Read(b []byte) (n int, err error) {
 func (a *Archive) Seek(offset int64, whence int) (int64, error) {
 	r := unarrc.Seek(a.stream, offset, whence)
 	if !r {
-		return 0, errors.New("unarr: Seek failed")
+		return 0, ErrSeek
 	}
 
 	return int64(unarrc.Tell(a.stream)), nil
@@ -205,7 +215,7 @@ func (a *Archive) ReadAll() ([]byte, error) {
 	}
 
 	if size > 0 {
-		return nil, fmt.Errorf("unarr read failure: %w", err)
+		return nil, ErrRead
 	}
 
 	return b, nil
