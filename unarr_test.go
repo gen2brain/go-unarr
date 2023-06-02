@@ -2,7 +2,6 @@ package unarr
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +27,7 @@ func TestNewArchive(t *testing.T) {
 
 func TestNewArchiveFromMemory(t *testing.T) {
 	for _, f := range files {
-		d, err := ioutil.ReadFile(filepath.Join("testdata", f))
+		d, err := os.ReadFile(filepath.Join("testdata", f))
 		if err != nil {
 			t.Error(err)
 		}
@@ -292,7 +291,7 @@ func TestReadAll(t *testing.T) {
 
 func TestReadAllFromMemory(t *testing.T) {
 	for _, e := range exts {
-		m, err := ioutil.ReadFile(filepath.Join("testdata", "test."+e))
+		m, err := os.ReadFile(filepath.Join("testdata", "test."+e))
 		if err != nil {
 			t.Error(err)
 		}
@@ -321,7 +320,7 @@ func TestReadAllFromMemory(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	tmpdir, err := ioutil.TempDir(os.TempDir(), "unarr")
+	tmpdir, err := os.MkdirTemp(os.TempDir(), "unarr")
 	if err != nil {
 		t.Error(err)
 	}
@@ -340,7 +339,7 @@ func TestExtract(t *testing.T) {
 }
 
 func TestExtractFromMemory(t *testing.T) {
-	tmpdir, err := ioutil.TempDir(os.TempDir(), "unarr")
+	tmpdir, err := os.MkdirTemp(os.TempDir(), "unarr")
 	if err != nil {
 		t.Error(err)
 	}
@@ -348,7 +347,7 @@ func TestExtractFromMemory(t *testing.T) {
 	defer os.RemoveAll(tmpdir)
 
 	for _, f := range files {
-		data, err := ioutil.ReadFile(filepath.Join("testdata", f))
+		data, err := os.ReadFile(filepath.Join("testdata", f))
 		if err != nil {
 			t.Error(err)
 		}
@@ -409,7 +408,7 @@ func TestNotValid(t *testing.T) {
 }
 
 func TestExtractCorrupted(t *testing.T) {
-	tmpdir, err := ioutil.TempDir(os.TempDir(), "unarr")
+	tmpdir, err := os.MkdirTemp(os.TempDir(), "unarr")
 	if err != nil {
 		t.Error(err)
 	}
