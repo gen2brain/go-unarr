@@ -3,18 +3,8 @@ project_name: unarr
 before:
   hooks:
     - go mod download
+
 builds:
-  - id: unarr-win-x64
-    binary: "{{ .ProjectName }}"
-    # brew install mingw-w64
-    main: ./cmd/unarr/unarr.go
-    env:
-      - CGO_ENABLED=1
-      - CC=x86_64-w64-mingw32-gcc
-    goos:
-      - windows
-    goarch:
-      - amd64
   - id: unarr-linux-x64
     binary: "{{ .ProjectName }}"
     # brew install FiloSottile/musl-cross/musl-cross
@@ -22,24 +12,57 @@ builds:
     env:
       - CGO_ENABLED=1
       - CC=x86_64-linux-musl-gcc
-    flags:
-      - "-ldflags"
-      - '-extldflags "-static"'
+    flags: &flags
+      - "-trimpath"
+    ldflags: &ldflags
+      - "-s -w -extldflags '-static'"
     goos:
       - linux
     goarch:
       - amd64
+
+  - id: unarr-win-x64
+    binary: "{{ .ProjectName }}"
+    # brew install mingw-w64
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+    flags: *flags
+    ldflags: *ldflags
+    goos:
+      - windows
+    goarch:
+      - amd64
+
   - id: unarr-darwin-x64
     binary: "{{ .ProjectName }}"
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      # comment CC line if releasing from macOS
       - CC=x86_64-apple-darwin21.1-clang
+    flags: *flags
+    ldflags:
+      - "-s -w"
     goos:
       - darwin
     goarch:
       - amd64
+
+  - id: unarr-darwin-arm64
+    binary: "{{ .ProjectName }}"
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-apple-darwin21.1-clang
+    flags: *flags
+    ldflags:
+      - "-s -w"
+    goos:
+      - darwin
+    goarch:
+      - arm64
+
 archives:
   - id: archive
     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
@@ -48,10 +71,14 @@ archives:
       linux: Linux
       windows: Windows
       amd64: x86_64
+      arm64: aarch64
+
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 changelog:
   sort: asc
   filters:
