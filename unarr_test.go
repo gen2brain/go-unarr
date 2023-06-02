@@ -441,3 +441,26 @@ func TestListCorrupted(t *testing.T) {
 
 	a.Close()
 }
+
+func TestSubdir(t *testing.T) {
+	a, err := NewArchive(filepath.Join("testdata", "test_subdir.zip"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = a.EntryFor("test/test.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	data, err := a.ReadAll()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if strings.TrimSpace(string(data)) != "unarr" {
+		t.Error("Invalid data")
+	}
+
+	a.Close()
+}
