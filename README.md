@@ -38,8 +38,6 @@ For multi-platform cross-compile builds:
 goreleaser --snapshot --skip-publish --rm-dist
 ```
 
-See `build.sh` for **gcc toolchain** information and for manual cross-platform build instructions.
-
 ## Library Examples
 
 #### Install Library
