@@ -4,7 +4,6 @@ package unarr
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,7 +64,7 @@ func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 
 // NewArchiveFromReader returns new unarr Archive from io.Reader
 func NewArchiveFromReader(r io.Reader) (a *Archive, err error) {
-	b, e := ioutil.ReadAll(r)
+	b, e := io.ReadAll(r)
 	if e != nil {
 		err = e
 		return
@@ -243,9 +242,9 @@ func (a *Archive) Extract(path string) (contents []string, err error) {
 		}
 
 		dirname := filepath.Join(path, filepath.Dir(name))
-		os.MkdirAll(dirname, 0755)
+		_ = os.MkdirAll(dirname, 0755)
 
-		e = ioutil.WriteFile(filepath.Join(dirname, filepath.Base(name)), data, 0644)
+		e = os.WriteFile(filepath.Join(dirname, filepath.Base(name)), data, 0644)
 		if e != nil {
 			err = e
 			return
