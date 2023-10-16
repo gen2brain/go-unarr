@@ -33,7 +33,7 @@ static void CSeekStream_CreateVTable(struct CSeekStream *in_stream, ar_stream *s
 }
 
 #ifndef USE_7Z_CRC32
-UInt32 MY_FAST_CALL CrcCalc(const void *data, size_t size)
+UInt32 Z7_FASTCALL CrcCalc(const void *data, size_t size)
 {
     return ar_crc32(0, data, size);
 }
@@ -173,7 +173,7 @@ ar_archive *ar_open_7z_archive(ar_stream *stream)
     _7z->look_stream.realStream = &_7z->in_stream.super;
     _7z->look_stream.buf = ISzAlloc_Alloc(&gSzAlloc, 1 << 18);
     _7z->look_stream.bufSize = 1 << 18;
-    LookToRead2_Init(&_7z->look_stream);
+    LookToRead2_INIT(&_7z->look_stream);
 
 
 #ifdef USE_7Z_CRC32

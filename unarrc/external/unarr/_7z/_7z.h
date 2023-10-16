@@ -41,7 +41,7 @@ struct ar_archive_7z_s {
 };
 
 #ifndef USE_7Z_CRC32
-UInt32 MY_FAST_CALL CrcCalc(const void *data, size_t size);
+UInt32 Z7_FASTCALL CrcCalc(const void *data, size_t size);
 #endif
 
 #endif
