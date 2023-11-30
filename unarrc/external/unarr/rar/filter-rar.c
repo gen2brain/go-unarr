@@ -325,12 +325,11 @@ static bool rar_execute_filter_e8(struct RARFilter *filter, RARVirtualMachine *v
 {
     uint32_t length = filter->initialregisters[4];
     uint32_t filesize = 0x1000000;
-    uint32_t i;
 
-    if (length > RARProgramWorkSize || length < 4)
+    if (length > RARProgramWorkSize || length < 5)
         return false;
 
-    for (i = 0; i <= length - 5; i++) {
+    for (uint32_t i = 0; i <= length - 5; i++) {
         if (vm->memory[i] == 0xE8 || (e9also && vm->memory[i] == 0xE9)) {
             uint32_t currpos = (uint32_t)pos + i + 1;
             int32_t address = (int32_t)RARVirtualMachineRead32(vm, i + 1);
@@ -354,17 +353,16 @@ static bool rar_execute_filter_rgb(struct RARFilter *filter, RARVirtualMachine *
     uint32_t byteoffset = filter->initialregisters[1];
     uint32_t blocklength = filter->initialregisters[4];
     uint8_t *src, *dst;
-    uint32_t i, j;
 
-    if (blocklength > RARProgramWorkSize / 2 || stride > blocklength)
+    if (blocklength < 2 || blocklength > (RARProgramWorkSize / 2) || stride > blocklength)
         return false;
 
     src = &vm->memory[0];
     dst = &vm->memory[blocklength];
-    for (i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         uint8_t byte = 0;
         uint8_t *prev = dst + i - stride;
-        for (j = i; j < blocklength; j += 3) {
+        for (uint32_t j = i; j < blocklength; j += 3) {
             if (prev >= dst) {
                 uint32_t delta1 = abs(prev[3] - prev[0]);
                 uint32_t delta2 = abs(byte - prev[0]);
@@ -377,7 +375,7 @@ static bool rar_execute_filter_rgb(struct RARFilter *filter, RARVirtualMachine *
             prev += 3;
         }
     }
-    for (i = byteoffset; i < blocklength - 2; i += 3) {
+    for (uint32_t i = byteoffset; i < blocklength - 2; i += 3) {
         dst[i] += dst[i + 1];
         dst[i + 2] += dst[i + 1];
     }
