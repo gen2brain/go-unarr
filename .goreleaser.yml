@@ -21,6 +21,19 @@ builds:
     goarch:
       - amd64
 
+  - id: unarr-linux-arm64
+    binary: "{{ .ProjectName }}"
+    main: ./cmd/unarr/unarr.go
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-pc-linux-musl-gcc
+    flags: *flags
+    ldflags: *ldflags
+    goos:
+      - linux
+    goarch:
+      - arm64
+
   - id: unarr-win-x64
     binary: "{{ .ProjectName }}"
     # brew install mingw-w64
