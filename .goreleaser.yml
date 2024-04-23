@@ -40,7 +40,7 @@ builds:
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      - CC=x86_64-apple-darwin21.1-clang
+      - CC=x86_64-apple-darwin21.4-clang
     flags: *flags
     ldflags:
       - "-s -w"
@@ -54,7 +54,7 @@ builds:
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      - CC=aarch64-apple-darwin21.1-clang
+      - CC=aarch64-apple-darwin21.4-clang
     flags: *flags
     ldflags:
       - "-s -w"
@@ -65,13 +65,22 @@ builds:
 
 archives:
   - id: archive
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
-      arm64: aarch64
+    wrap_in_directory: "{{ .ProjectName }}-{{ .Version }}"
+    name_template: >-
+      {{- .ProjectName }}-
+      {{- .Version }}-
+      {{- .Os }}-
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "arm64" }}aarch64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+    - goos: windows
+      format: zip
+    - goos: darwin
+      format: zip
+    files:
+      - README.md
+      - LICENSE
 
 checksum:
   name_template: 'checksums.txt'
