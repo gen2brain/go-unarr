@@ -53,7 +53,7 @@ builds:
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      - CC=x86_64-apple-darwin21.4-clang
+      - CC=x86_64-apple-darwin23.5-clang
     flags: *flags
     ldflags:
       - "-s -w"
@@ -67,7 +67,7 @@ builds:
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      - CC=aarch64-apple-darwin21.4-clang
+      - CC=aarch64-apple-darwin23.5-clang
     flags: *flags
     ldflags:
       - "-s -w"
