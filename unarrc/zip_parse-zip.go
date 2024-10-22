@@ -1,3 +1,5 @@
+//go:build !extlib
+
 package unarrc
 
 /*

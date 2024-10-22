@@ -12,6 +12,12 @@
 
 See <https://pkg.go.dev/github.com/gen2brain/go-unarr>
 
+## Build tags
+
+* `extlib` - use external libunarr library
+* `pkgconfig` - enable pkg-config (used with `extlib`)
+* `static` - use static library (used with `pkgconfig`)
+
 ## Install CLI
 
 ```bash
