@@ -19,6 +19,16 @@ static bool br_fill(ar_archive_rar *rar, int bits)
     if (rar->progress.data_left < (size_t)count)
         count = (int)rar->progress.data_left;
 
+    /* If no data left but we still need more, try to continue to next volume */
+    if (count == 0 && rar->progress.data_left == 0 && rar->progress.bytes_done < rar->super.entry_size_uncompressed) {
+        if (rar_continue_volume(&rar->super)) {
+            /* Recalculate count with new data_left */
+            count = (64 - rar->uncomp.br.available) / 8;
+            if (rar->progress.data_left < (size_t)count)
+                count = (int)rar->progress.data_left;
+        }
+    }
+
     if (bits > rar->uncomp.br.available + 8 * count || ar_read(rar->super.stream, bytes, count) != (size_t)count) {
         if (!rar->uncomp.br.at_eof) {
             warn("Unexpected EOF during decompression (truncated file?)");

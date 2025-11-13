@@ -77,6 +77,7 @@ struct ar_archive_rar_entry {
 bool rar_parse_header(ar_archive *ar, struct rar_header *header);
 bool rar_check_header_crc(ar_archive *ar);
 bool rar_parse_header_entry(ar_archive_rar *rar, struct rar_header *header, struct rar_entry *entry);
+bool rar_continue_volume(ar_archive *ar);
 const char *rar_get_name(ar_archive *ar, bool raw);
 
 /***** filter-rar *****/

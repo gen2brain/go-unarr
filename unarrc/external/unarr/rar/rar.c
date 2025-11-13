@@ -68,7 +68,7 @@ static bool rar_parse_entry(ar_archive *ar, off64_t offset)
                 warn("Can't skip directory entries containing data");
             }
             if ((header.flags & (LHD_SPLIT_BEFORE | LHD_SPLIT_AFTER)))
-                warn("Splitting files isn't really supported");
+                log("Splitting files across volumes");
             ar->entry_size_uncompressed = (size_t)entry.size;
             ar->entry_filetime = ar_conv_dosdate_to_filetime(entry.dosdate);
             if (!rar->entry.solid || rar->entry.method == METHOD_STORE || out_of_order) {
@@ -117,19 +117,74 @@ static bool rar_parse_entry(ar_archive *ar, off64_t offset)
     }
 }
 
+/* Continue reading from next volume for split files */
+bool rar_continue_volume(ar_archive *ar)
+{
+    ar_archive_rar *rar = (ar_archive_rar *)ar;
+    struct rar_header header;
+    struct rar_entry entry;
+    
+    /* Check if we're still within the uncompressed data */
+    if (rar->progress.bytes_done >= ar->entry_size_uncompressed)
+        return false;
+    
+    /* The stream should now be positioned at the end of the current volume's data.
+     * The multivolume stream will have automatically moved to the next volume.
+     * Now we need to parse the header in the next volume to get the datasize. */
+    
+    /* Parse the header at current position (should be continuation header in next volume) */
+    if (!rar_parse_header(ar, &header))
+        return false;
+    
+    /* Check if this is a continuation header */
+    if (header.type == TYPE_FILE_ENTRY) {
+        /* Parse the entry details to get the header size */
+        if (!rar_parse_header_entry(rar, &header, &entry))
+            return false;
+        
+        /* Update data_left with the datasize from this volume part */
+        rar->progress.data_left = (size_t)header.datasize;
+        
+        return true;
+    } else if (header.type == TYPE_END_OF_ARCHIVE || header.type == TYPE_FILE_SIGNATURE || header.type == TYPE_MAIN_HEADER) {
+        /* Skip non-file-entry headers and try again */
+        if (!ar_skip(ar->stream, header.size - 7 + header.datasize))
+            return false;
+        
+        /* Try parsing the next header recursively */
+        return rar_continue_volume(ar);
+    }
+    
+    return false;
+}
+
 static bool rar_copy_stored(ar_archive_rar *rar, void *buffer, size_t count)
 {
-    if (count > rar->progress.data_left) {
-        warn("Unexpected EOS in stored data");
-        return false;
+    size_t total_read = 0;
+    
+    while (count > 0) {
+        size_t to_read;
+        
+        /* If no data left in current volume part, try to continue to next volume */
+        if (rar->progress.data_left == 0) {
+            if (!rar_continue_volume(&rar->super))
+                break;
+        }
+        
+        to_read = count < rar->progress.data_left ? count : rar->progress.data_left;
+        
+        if (ar_read(rar->super.stream, (char *)buffer + total_read, to_read) != to_read) {
+            warn("Unexpected EOF in stored data");
+            return false;
+        }
+        
+        rar->progress.data_left -= to_read;
+        rar->progress.bytes_done += to_read;
+        total_read += to_read;
+        count -= to_read;
     }
-    if (ar_read(rar->super.stream, buffer, count) != count) {
-        warn("Unexpected EOF in stored data");
-        return false;
-    }
-    rar->progress.data_left -= count;
-    rar->progress.bytes_done += count;
-    return true;
+    
+    return total_read > 0 || count == 0;
 }
 
 static bool rar_restart_solid(ar_archive *ar)

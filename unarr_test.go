@@ -464,3 +464,77 @@ func TestSubdir(t *testing.T) {
 
 	a.Close()
 }
+
+func TestMultiVolumeRar(t *testing.T) {
+	// Look for any multi-volume RAR archive in testdata/multivolume/
+	// Users can place their own test data here for testing
+	multivolDir := filepath.Join("testdata", "multivolume")
+	
+	// Check if directory exists
+	if _, err := os.Stat(multivolDir); os.IsNotExist(err) {
+		t.Skip("Multi-volume test directory not available (testdata/multivolume/)")
+		return
+	}
+
+	// Find first .rar file in directory
+	entries, err := os.ReadDir(multivolDir)
+	if err != nil {
+		t.Skip("Could not read multivolume directory")
+		return
+	}
+
+	var rarPath string
+	for _, entry := range entries {
+		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".rar" {
+			rarPath = filepath.Join(multivolDir, entry.Name())
+			break
+		}
+	}
+
+	if rarPath == "" {
+		t.Skip("No .rar file found in testdata/multivolume/")
+		return
+	}
+
+	a, err := NewArchive(rarPath)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer a.Close()
+
+	// Extract to temporary directory
+	tmpdir, err := os.MkdirTemp(os.TempDir(), "unarr-multivolume")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer os.RemoveAll(tmpdir)
+
+	contents, err := a.Extract(tmpdir)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if len(contents) == 0 {
+		t.Error("No files extracted from multi-volume archive")
+		return
+	}
+
+	// Verify at least one file was extracted and has content
+	for _, filename := range contents {
+		extractedPath := filepath.Join(tmpdir, filename)
+		info, err := os.Stat(extractedPath)
+		if err != nil {
+			t.Errorf("Failed to stat extracted file %s: %v", filename, err)
+			continue
+		}
+		
+		if info.Size() == 0 {
+			t.Errorf("Extracted file %s has zero size", filename)
+		}
+	}
+
+	t.Logf("Successfully extracted %d file(s) from multi-volume RAR archive", len(contents))
+}

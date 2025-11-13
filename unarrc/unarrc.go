@@ -22,6 +22,20 @@ func OpenMemory(data unsafe.Pointer, datalen uint) *Stream {
 	return v
 }
 
+// OpenMultivolume .
+func OpenMultivolume(path string) *Stream {
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+	ret := C.ar_open_multivolume(cpath)
+	v := *(**Stream)(unsafe.Pointer(&ret))
+	if v == nil {
+		// Try regular file as fallback
+		ret = C.ar_open_file(cpath)
+		v = *(**Stream)(unsafe.Pointer(&ret))
+	}
+	return v
+}
+
 // Close .
 func Close(stream *Stream) {
 	cstream := (*C.ar_stream)(unsafe.Pointer(stream))

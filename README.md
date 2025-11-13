@@ -8,6 +8,14 @@
 
 `unarr` is a decompression library and CLI for RAR, TAR, ZIP and 7z archives.
 
+## Features
+
+- Extract RAR, TAR, ZIP, and 7z archives
+- **Multi-volume RAR archive support** (.rar, .r00, .r01, etc.)
+- List archive contents
+- Read individual files from archives
+- Pure Go API with CGO bindings to C libraries
+
 ## GoDoc
 
 See <https://pkg.go.dev/github.com/gen2brain/go-unarr>
@@ -143,3 +151,40 @@ if err != nil {
     panic(err)
 }
 ```
+
+#### Extract multi-volume RAR archive
+
+```go
+// Provide the path to the first volume (.rar file)
+// The library will automatically read from .r00, .r01, .r02, etc.
+a, err := unarr.NewArchive("archive.rar")
+if err != nil {
+    panic(err)
+}
+defer a.Close()
+
+_, err = a.Extract("/tmp/path")
+if err != nil {
+    panic(err)
+}
+```
+
+## Testing
+
+Run all tests:
+
+```bash
+go test -v
+```
+
+### Multi-Volume Archive Testing (Optional)
+
+To test multi-volume RAR support, place your multi-volume test files in `testdata/multivolume/`:
+
+```bash
+mkdir -p testdata/multivolume
+# Copy your .rar, .r00, .r01, etc. files to testdata/multivolume/
+go test -v -run TestMultiVolumeRar
+```
+
+The test will automatically detect and test any `.rar` file found in that directory.

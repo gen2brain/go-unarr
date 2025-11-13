@@ -36,7 +36,18 @@ type Archive struct {
 func NewArchive(path string) (a *Archive, err error) {
 	a = new(Archive)
 
-	a.stream = unarrc.OpenFile(path)
+	// Check if this might be a RAR archive (including multi-volume)
+	ext := strings.ToLower(filepath.Ext(path))
+	isRar := ext == ".rar" || (len(ext) == 4 && ext[0] == '.' && ext[1] == 'r' && ext[2] >= '0' && ext[2] <= '9' && ext[3] >= '0' && ext[3] <= '9')
+	
+	if isRar {
+		// Use multi-volume stream for RAR archives
+		a.stream = unarrc.OpenMultivolume(path)
+	} else {
+		// Use regular file stream for other formats
+		a.stream = unarrc.OpenFile(path)
+	}
+	
 	if a.stream == nil {
 		err = ErrOpenFile
 		return
