@@ -9,13 +9,21 @@ struct MultiVolumeStream {
     char *base_path;          /* Base path without extension */
     char *current_path;       /* Current volume path */
     FILE *current_file;       /* Current open file handle */
-    off64_t current_volume;   /* Current volume number (-1 for .rar, 0+ for .r00, .r01, etc.) */
+    off64_t current_volume;   /* Current volume number (-1 for .rar, 0+ for .r00, .r01, ..., .z99) */
     off64_t offset;           /* Global offset across all volumes */
     off64_t current_size;     /* Size of current volume */
     off64_t total_offset;     /* Total bytes read so far */
 };
 
-/* Get the next volume path based on current volume number */
+/* Get the next volume path based on current volume number
+ * Naming convention:
+ *   -1: .rar
+ *   0-99: .r00 to .r99
+ *   100-199: .s00 to .s99
+ *   200-299: .t00 to .t99
+ *   300-399: .u00 to .u99
+ *   ... continuing through alphabet to .z99 (2599 total volumes)
+ */
 static char *get_volume_path(const char *base_path, off64_t volume_num) {
     size_t base_len = strlen(base_path);
     char *path = malloc(base_len + 10); /* Room for extension */
@@ -25,11 +33,21 @@ static char *get_volume_path(const char *base_path, off64_t volume_num) {
     strcpy(path, base_path);
     
     if (volume_num < 0) {
+        /* First volume */
         strcat(path, ".rar");
-    } else if (volume_num < 100) {
-        sprintf(path + base_len, ".r%02d", (int)volume_num);
     } else {
-        sprintf(path + base_len, ".s%02d", (int)(volume_num - 100));
+        /* Calculate the letter suffix: r, s, t, u, ..., z */
+        int hundred = (int)(volume_num / 100);
+        int remainder = (int)(volume_num % 100);
+        char letter = 'r' + hundred;
+        
+        /* Support volumes 0-2599 (.r00 through .z99) */
+        if (letter > 'z') {
+            free(path);
+            return NULL; /* Volume number too high */
+        }
+        
+        sprintf(path + base_len, ".%c%02d", letter, remainder);
     }
     
     return path;
@@ -193,7 +211,7 @@ static bool multivolume_seek(void *data, off64_t offset, int origin) {
         cumulative_offset += volume_size;
         volume_num++;
         
-        if (volume_num > 999) /* Safety limit */
+        if (volume_num > 2599) /* Safety limit: max .z99 */
             return false;
     }
 }

@@ -53,7 +53,7 @@ UNARR_EXPORT ar_stream *ar_open_file(const char *path);
 #ifdef _WIN32
 UNARR_EXPORT ar_stream *ar_open_file_w(const wchar_t *path);
 #endif
-/* opens a read-only stream for multi-volume archives (e.g., .rar, .r00, .r01, ...); returns NULL on error */
+/* opens a read-only stream for multi-volume archives (e.g., .rar, .r00-.r99, .s00-.s99, .t00-.z99); returns NULL on error */
 UNARR_EXPORT ar_stream *ar_open_multivolume(const char *path);
 /* opens a read-only stream for the given chunk of memory; the pointer must be valid until ar_close is called */
 UNARR_EXPORT ar_stream *ar_open_memory(const void *data, size_t datalen);
