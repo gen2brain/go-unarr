@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gen2brain/go-unarr/unarrc"
 )
 
 var (
@@ -537,4 +539,119 @@ func TestMultiVolumeRar(t *testing.T) {
 	}
 
 	t.Logf("Successfully extracted %d file(s) from multi-volume RAR archive", len(contents))
+}
+
+func TestVolumePathNaming(t *testing.T) {
+	basePath := "/tmp/archive"
+
+	tests := []struct {
+		volumeNum int64
+		expected  string
+	}{
+		// First volume
+		{-1, "/tmp/archive.rar"},
+		
+		// Volumes 0-99 (.r00 to .r99)
+		{0, "/tmp/archive.r00"},
+		{1, "/tmp/archive.r01"},
+		{50, "/tmp/archive.r50"},
+		{99, "/tmp/archive.r99"},
+		
+		// Volumes 100-199 (.s00 to .s99)
+		{100, "/tmp/archive.s00"},
+		{101, "/tmp/archive.s01"},
+		{150, "/tmp/archive.s50"},
+		{199, "/tmp/archive.s99"},
+		
+		// Volumes 200-299 (.t00 to .t99)
+		{200, "/tmp/archive.t00"},
+		{201, "/tmp/archive.t01"},
+		{250, "/tmp/archive.t50"},
+		{299, "/tmp/archive.t99"},
+		
+		// Volumes 300-399 (.u00 to .u99)
+		{300, "/tmp/archive.u00"},
+		{399, "/tmp/archive.u99"},
+		
+		// Volumes 400-499 (.v00 to .v99)
+		{400, "/tmp/archive.v00"},
+		{499, "/tmp/archive.v99"},
+		
+		// Volumes 500-599 (.w00 to .w99)
+		{500, "/tmp/archive.w00"},
+		{599, "/tmp/archive.w99"},
+		
+		// Volumes 600-699 (.x00 to .x99)
+		{600, "/tmp/archive.x00"},
+		{699, "/tmp/archive.x99"},
+		
+		// Volumes 700-799 (.y00 to .y99)
+		{700, "/tmp/archive.y00"},
+		{799, "/tmp/archive.y99"},
+		
+		// Volumes 800-899 (.z00 to .z99)
+		{800, "/tmp/archive.z00"},
+		{899, "/tmp/archive.z99"},
+		
+		// Edge cases at boundaries
+		{98, "/tmp/archive.r98"},
+		{99, "/tmp/archive.r99"},
+		{100, "/tmp/archive.s00"},
+		{198, "/tmp/archive.s98"},
+		{199, "/tmp/archive.s99"},
+		{200, "/tmp/archive.t00"},
+	}
+
+	for _, tt := range tests {
+		result := unarrc.TestGetVolumePath(basePath, tt.volumeNum)
+		if result == "" {
+			t.Errorf("TestGetVolumePath(%d) returned empty string", tt.volumeNum)
+			continue
+		}
+		
+		if result != tt.expected {
+			t.Errorf("TestGetVolumePath(%d) = %s, want %s", tt.volumeNum, result, tt.expected)
+		}
+	}
+}
+
+func TestVolumePathMaxLimit(t *testing.T) {
+	basePath := "/tmp/archive"
+
+	// Test maximum valid volume (899 = .z99)
+	result := unarrc.TestGetVolumePath(basePath, 899)
+	if result == "" {
+		t.Error("TestGetVolumePath(899) returned empty, but should be valid (.z99)")
+	} else {
+		expected := "/tmp/archive.z99"
+		if result != expected {
+			t.Errorf("TestGetVolumePath(899) = %s, want %s", result, expected)
+		}
+	}
+
+	// Test volume beyond maximum (900 should fail)
+	result = unarrc.TestGetVolumePath(basePath, 900)
+	if result != "" {
+		t.Errorf("TestGetVolumePath(900) should return empty (too high), but got %s", result)
+	}
+}
+
+func TestVolumePathAlphabetCoverage(t *testing.T) {
+	basePath := "/tmp/test"
+
+	// Test that each letter from r to z is covered
+	alphabet := "rstuvwxyz"
+	for i, letter := range alphabet {
+		volumeNum := int64(i * 100) // 0, 100, 200, 300, ..., 800
+		result := unarrc.TestGetVolumePath(basePath, volumeNum)
+		if result == "" {
+			t.Errorf("TestGetVolumePath(%d) returned empty for letter '%c'", volumeNum, letter)
+			continue
+		}
+		
+		expected := "/tmp/test." + string(letter) + "00"
+		if result != expected {
+			t.Errorf("TestGetVolumePath(%d) = %s, want %s (letter '%c')", volumeNum, result, expected, letter)
+		}
+	}
 }

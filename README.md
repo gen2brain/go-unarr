@@ -11,7 +11,7 @@
 ## Features
 
 - Extract RAR, TAR, ZIP, and 7z archives
-- **Multi-volume RAR archive support** (.rar, .r00-.r99, .s00-.s99, .t00-.t99, etc. up to .z99)
+- **Multi-volume RAR archive support** (.rar, .r00-.r99, .s00-.s99, .t00-.t99, .u00-.u99, .v00-.v99, .w00-.w99, .x00-.x99, .y00-.y99, .z00-.z99)
 - List archive contents
 - Read individual files from archives
 - Pure Go API with CGO bindings to C libraries
@@ -160,7 +160,8 @@ if err != nil {
 //   .r00, .r01, ..., .r99 (volumes 0-99)
 //   .s00, .s01, ..., .s99 (volumes 100-199)
 //   .t00, .t01, ..., .t99 (volumes 200-299)
-//   ... continuing through alphabet to .z99 (up to 2600 total volumes)
+//   ... continuing through alphabet ...
+//   .z00, .z01, ..., .z99 (volumes 800-899, up to 900 total volumes)
 a, err := unarr.NewArchive("archive.rar")
 if err != nil {
     panic(err)
