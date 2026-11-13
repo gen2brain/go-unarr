@@ -483,22 +483,29 @@ func TestEmpty(t *testing.T) {
 	}
 }
 
+func openDropped(t *testing.T, f string) *Archive {
+	d, err := os.ReadFile(filepath.Join("testdata", f))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a, err := NewArchiveFromMemory(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return a
+}
+
 func TestMemoryOwnership(t *testing.T) {
 	for _, f := range files {
-		d, err := os.ReadFile(filepath.Join("testdata", f))
-		if err != nil {
-			t.Fatal(err)
+		a := openDropped(t, f)
+
+		for i := 0; i < 5; i++ {
+			runtime.GC()
 		}
 
-		a, err := NewArchiveFromMemory(d)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		clear(d)
-		runtime.GC()
-
-		err = a.Entry()
+		err := a.Entry()
 		if err != nil {
 			t.Errorf("%s: %v", f, err)
 		}
@@ -513,6 +520,17 @@ func TestMemoryOwnership(t *testing.T) {
 		}
 
 		a.Close()
+	}
+}
+
+func TestNoClose(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		for _, f := range files {
+			openDropped(t, f)
+		}
+
+		runtime.GC()
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 

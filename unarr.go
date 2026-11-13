@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 	"unsafe"
@@ -35,8 +36,9 @@ type Archive struct {
 	stream *unarrc.Stream
 	// C archive struct
 	archive *unarrc.Archive
-	// C copy of the archive data
-	mem unsafe.Pointer
+	// archive data, pinned while open
+	data   []byte
+	pinner runtime.Pinner
 	// unread bytes of the current entry
 	remaining int
 }
@@ -56,7 +58,9 @@ func NewArchive(path string) (a *Archive, err error) {
 	return
 }
 
-// NewArchiveFromMemory returns new unarr Archive from byte slice
+// NewArchiveFromMemory returns new unarr Archive from byte slice.
+//
+// The byte slice must not be modified until the archive is closed.
 func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 	a = new(Archive)
 
@@ -65,9 +69,10 @@ func NewArchiveFromMemory(b []byte) (a *Archive, err error) {
 		return
 	}
 
-	a.mem = unarrc.CBytes(b)
+	a.data = b
+	a.pinner.Pin(&b[0])
 
-	a.stream = unarrc.OpenMemory(a.mem, uint(len(b)))
+	a.stream = unarrc.OpenMemory(unsafe.Pointer(&b[0]), uint(len(b)))
 	if a.stream == nil {
 		a.Close()
 		err = ErrOpenMemory
@@ -113,7 +118,11 @@ func (a *Archive) open() (err error) {
 		a.stream = nil
 
 		err = ErrOpenArchive
+
+		return
 	}
+
+	runtime.SetFinalizer(a, (*Archive).Close)
 
 	return
 }
@@ -214,12 +223,11 @@ func (a *Archive) Close() (err error) {
 		a.stream = nil
 	}
 
-	if a.mem != nil {
-		unarrc.Free(a.mem)
-		a.mem = nil
-	}
-
+	a.pinner.Unpin()
+	a.data = nil
 	a.remaining = 0
+
+	runtime.SetFinalizer(a, nil)
 
 	return
 }
