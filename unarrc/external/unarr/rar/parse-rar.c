@@ -4,6 +4,7 @@
 /* adapted from https://code.google.com/p/theunarchiver/source/browse/XADMaster/XADRARParser.m */
 
 #include "rar.h"
+#include <stdint.h>
 
 static inline uint8_t uint8le(unsigned char *data) { return data[0]; }
 static inline uint16_t uint16le(unsigned char *data) { return data[0] | data[1] << 8; }
@@ -110,78 +111,104 @@ bool rar_parse_header_entry(ar_archive_rar *rar, struct rar_header *header, stru
     return true;
 }
 
-/* this seems to be what RAR considers "Unicode" */
+/* Decode RAR encoded Unicode filename to UTF-8 */
 static char *rar_conv_unicode_to_utf8(const char *data, uint16_t len)
 {
-#define Check(cond) if (!(cond)) { free(str); return NULL; } else ((void)0)
-
-    uint8_t highbyte, flagbyte, flagbits, size, length, i;
+    // Encoded UTF-16 data starts after the \0 separator
     const uint8_t *in = (const uint8_t *)data + strlen(data) + 1;
     const uint8_t *end_in = (const uint8_t *)data + len;
-    char *str = calloc(len + 1, 3);
-    char *out = str;
-    char *end_out = str + len * 3;
 
-    if (!str)
+    // Allocate 3 bytes per character
+    char *str = calloc(len + 1, 3);
+    if (!str) {
         return NULL;
-    if (end_in - in <= 1) {
+    }
+    char *out = str;
+    char *end_out = str + (len * 3);
+
+    // No encoded Unicode data
+    if ((end_in - in) <= 1) {
         memcpy(str, data, len);
         return str;
     }
 
-    highbyte = *in++;
-    flagbyte = 0;
-    flagbits = 0;
-    size = 0;
+    uint8_t highbyte = *in++;
+    uint8_t flagbyte = 0;
+    uint8_t flagbits = 0;
+    uint8_t name_index = 0;
 
-    while (in < end_in && out < end_out) {
+    while ((in < end_in) && (out < end_out)) {
         if (flagbits == 0) {
             flagbyte = *in++;
             flagbits = 8;
         }
         flagbits -= 2;
         switch ((flagbyte >> flagbits) & 3) {
-        case 0:
-            Check(in + 1 <= end_in);
+            case 0:
+            // Use the next byte as Unicode code point
+            if (in + 1 > end_in) {
+                goto fail;
+            }
             out += ar_conv_rune_to_utf8(*in++, out, end_out - out);
-            size++;
+            name_index++;
             break;
         case 1:
-            Check(in + 1 <= end_in);
+            // Combine stored high byte with next input byte
+            if (in + 1 > end_in) {
+                goto fail;
+            }
             out += ar_conv_rune_to_utf8(((uint16_t)highbyte << 8) | *in++, out, end_out - out);
-            size++;
+            name_index++;
             break;
         case 2:
-            Check(in + 2 <= end_in);
+            // Read next two bytes as little-endian 16-bit value
+            if (in + 2 > end_in) {
+                goto fail;
+            }
             out += ar_conv_rune_to_utf8(((uint16_t)*(in + 1) << 8) | *in, out, end_out - out);
             in += 2;
-            size++;
+            name_index++;
             break;
         case 3:
-            Check(in + 1 <= end_in);
-            length = *in++;
-            if ((length & 0x80)) {
-                uint8_t correction = *in++;
-                for (i = 0; i < (length & 0x7F) + 2; i++) {
-                    Check(size < len);
-                    out += ar_conv_rune_to_utf8(((uint16_t)highbyte << 8) | (data[size] + (correction & 0xFF)), out, end_out - out);
-                    size++;
+            {
+                // Reconstruct a series of Unicode code points from filename with optional correction value
+                if (in + 1 > end_in) {
+                    goto fail;
                 }
-            }
-            else {
-                for (i = 0; i < (length & 0x7F) + 2; i++) {
-                    Check(size < len);
-                    out += ar_conv_rune_to_utf8(data[size], out, end_out - out);
-                    size++;
+                uint8_t length = *in++;
+                if ((length & 0x80)) {
+                    if (in + 1 > end_in) {
+                        goto fail;
+                    }
+                    uint8_t correction = *in++;
+                    for (uint8_t i = 0; i < (length & 0x7F) + 2; i++) {
+                        if (name_index >= len) {
+                            goto fail;
+                        }
+                        out += ar_conv_rune_to_utf8(((uint16_t)highbyte << 8) |
+                                                    (data[name_index] + (correction & 0xFF)), out, end_out - out);
+                        name_index++;
+                    }
                 }
+                else {
+                    for (uint8_t i = 0; i < (length & 0x7F) + 2; i++) {
+                        if (name_index >= len) {
+                            goto fail;
+                        }
+                        out += ar_conv_rune_to_utf8(data[name_index], out, end_out - out);
+                        name_index++;
+                    }
+                }
+                break;
             }
-            break;
         }
     }
-
     return str;
 
-#undef Check
+fail:
+    free(str);
+    warn("Failed to parse RAR entry name");
+    return NULL;
 }
 
 const char *rar_get_name(ar_archive *ar, bool raw)
@@ -217,9 +244,11 @@ const char *rar_get_name(ar_archive *ar, bool raw)
             rar->entry.name = ar_conv_dos_to_utf8(name);
             free(name);
         }
+        /* no null separator - filename is UTF-8 */
         else if (namelen == strlen(name)) {
             rar->entry.name = name;
         }
+        /* filename + null separator + encoded unicode data */
         else {
             rar->entry.name = rar_conv_unicode_to_utf8(name, namelen);
             free(name);

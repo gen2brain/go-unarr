@@ -6,7 +6,7 @@
 #ifndef common_unarr_imp_h
 #define common_unarr_imp_h
 
-#include "../unarr.h"
+#include "unarr.h"
 #include "allocator.h"
 
 #include <stdlib.h>

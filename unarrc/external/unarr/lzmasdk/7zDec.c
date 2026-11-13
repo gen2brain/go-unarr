@@ -1,5 +1,5 @@
 /* 7zDec.c -- Decoding from 7z folder
-2023-04-02 : Igor Pavlov : Public domain */
+: Igor Pavlov : Public domain */
 
 #include "Precomp.h"
 
@@ -51,6 +51,7 @@
 
 #ifndef Z7_NO_METHODS_FILTERS
 #define k_Delta 3
+#define k_RISCV 0xb
 #define k_BCJ   0x3030103
 #define k_PPC   0x3030205
 #define k_IA64  0x3030401
@@ -98,62 +99,61 @@ static Byte ReadByte(IByteInPtr pp)
 static SRes SzDecodePpmd(const Byte *props, unsigned propsSize, UInt64 inSize, ILookInStreamPtr inStream,
     Byte *outBuffer, SizeT outSize, ISzAllocPtr allocMain)
 {
-  CPpmd7 ppmd;
-  CByteInToLook s;
-  SRes res = SZ_OK;
-
-  s.vt.Read = ReadByte;
-  s.inStream = inStream;
-  s.begin = s.end = s.cur = NULL;
-  s.extra = False;
-  s.res = SZ_OK;
-  s.processed = 0;
+  CPpmd7 *ppmd;
+  SRes res;
+  unsigned order;
+  UInt32 memSize;
 
   if (propsSize != 5)
     return SZ_ERROR_UNSUPPORTED;
+  order = props[0];
+  memSize = GetUi32(props + 1);
+  if (order < PPMD7_MIN_ORDER ||
+      order > PPMD7_MAX_ORDER ||
+      memSize < PPMD7_MIN_MEM_SIZE ||
+      memSize > PPMD7_MAX_MEM_SIZE)
+    return SZ_ERROR_UNSUPPORTED;
+  if ((ppmd = (CPpmd7 *)ISzAlloc_Alloc(allocMain, sizeof(CPpmd7))) == NULL)
+    return SZ_ERROR_MEM;
+  Ppmd7_Construct(ppmd);
+  res = SZ_ERROR_MEM;
+  if (Ppmd7_Alloc(ppmd, memSize, allocMain))
+  {
+    CByteInToLook s;
+    s.vt.Read = ReadByte;
+    s.inStream = inStream;
+    s.begin = s.end = s.cur = NULL;
+    s.extra = False;
+    s.res = SZ_OK;
+    s.processed = 0;
 
-  {
-    unsigned order = props[0];
-    UInt32 memSize = GetUi32(props + 1);
-    if (order < PPMD7_MIN_ORDER ||
-        order > PPMD7_MAX_ORDER ||
-        memSize < PPMD7_MIN_MEM_SIZE ||
-        memSize > PPMD7_MAX_MEM_SIZE)
-      return SZ_ERROR_UNSUPPORTED;
-    Ppmd7_Construct(&ppmd);
-    if (!Ppmd7_Alloc(&ppmd, memSize, allocMain))
-      return SZ_ERROR_MEM;
-    Ppmd7_Init(&ppmd, order);
-  }
-  {
-    ppmd.rc.dec.Stream = &s.vt;
-    if (!Ppmd7z_RangeDec_Init(&ppmd.rc.dec))
-      res = SZ_ERROR_DATA;
-    else if (!s.extra)
+    Ppmd7_Init(ppmd, order);
+    ppmd->rc.dec.Stream = &s.vt;
+    res = SZ_ERROR_DATA;
+    if (Ppmd7z_RangeDec_Init(&ppmd->rc.dec) && !s.extra)
     {
       Byte *buf = outBuffer;
       const Byte *lim = buf + outSize;
       for (; buf != lim; buf++)
       {
-        int sym = Ppmd7z_DecodeSymbol(&ppmd);
+        int sym = Ppmd7z_DecodeSymbol(ppmd);
         if (s.extra || sym < 0)
           break;
         *buf = (Byte)sym;
       }
-      if (buf != lim)
-        res = SZ_ERROR_DATA;
-      else if (!Ppmd7z_RangeDec_IsFinishedOK(&ppmd.rc.dec))
-      {
-        /* if (Ppmd7z_DecodeSymbol(&ppmd) != PPMD7_SYM_END || !Ppmd7z_RangeDec_IsFinishedOK(&ppmd.rc.dec)) */
-        res = SZ_ERROR_DATA;
-      }
+      if (buf == lim)
+        if (Ppmd7z_RangeDec_IsFinishedOK(&ppmd->rc.dec)
+            // || (Ppmd7z_DecodeSymbol(&ppmd) == PPMD7_SYM_END && Ppmd7z_RangeDec_IsFinishedOK(&ppmd.rc.dec))
+            )
+          res = SZ_OK;
     }
     if (s.extra)
       res = (s.res != SZ_OK ? s.res : SZ_ERROR_DATA);
     else if (s.processed + (size_t)(s.cur - s.begin) != inSize)
       res = SZ_ERROR_DATA;
+    Ppmd7_Free(ppmd, allocMain);
   }
-  Ppmd7_Free(&ppmd, allocMain);
+  ISzAlloc_Free(allocMain, ppmd);
   return res;
 }
 
@@ -311,8 +311,9 @@ static BoolInt IS_MAIN_METHOD(UInt32 m)
     case k_PPMD:
   #endif
       return True;
+    default:
+      return False;
   }
-  return False;
 }
 
 static BoolInt IS_SUPPORTED_CODER(const CSzCoderInfo *c)
@@ -362,6 +363,7 @@ static SRes CheckSupportedFolder(const CSzFolder *f)
       case k_IA64:
       case k_SPARC:
       case k_ARM:
+      case k_RISCV:
     #endif
     #ifdef Z7_USE_FILTER_ARM64
       case k_ARM64:
@@ -535,10 +537,10 @@ static SRes SzFolder_Decode2(const CSzFolder *folder,
         }
       }
     }
-  #if defined(Z7_USE_BRANCH_FILTER)
+#if defined(Z7_USE_BRANCH_FILTER)
     else if (ci == 1)
     {
-     #if !defined(Z7_NO_METHODS_FILTERS)
+#if !defined(Z7_NO_METHODS_FILTERS)
       if (coder->MethodID == k_Delta)
       {
         if (coder->PropsSize != 1)
@@ -550,22 +552,43 @@ static SRes SzFolder_Decode2(const CSzFolder *folder,
         }
         continue;
       }
-     #endif
+#endif
      
-     #ifdef Z7_USE_FILTER_ARM64
+#ifdef Z7_USE_FILTER_ARM64
       if (coder->MethodID == k_ARM64)
       {
         UInt32 pc = 0;
         if (coder->PropsSize == 4)
+        {
           pc = GetUi32(propsData + coder->PropsOffset);
+          if (pc & 3)
+            return SZ_ERROR_UNSUPPORTED;
+        }
         else if (coder->PropsSize != 0)
           return SZ_ERROR_UNSUPPORTED;
         z7_BranchConv_ARM64_Dec(outBuffer, outSize, pc);
         continue;
       }
-     #endif
-     
-     #if !defined(Z7_NO_METHODS_FILTERS) || defined(Z7_USE_FILTER_ARMT)
+#endif
+
+#if !defined(Z7_NO_METHODS_FILTERS)
+      if (coder->MethodID == k_RISCV)
+      {
+        UInt32 pc = 0;
+        if (coder->PropsSize == 4)
+        {
+          pc = GetUi32(propsData + coder->PropsOffset);
+          if (pc & 1)
+            return SZ_ERROR_UNSUPPORTED;
+        }
+        else if (coder->PropsSize != 0)
+          return SZ_ERROR_UNSUPPORTED;
+        z7_BranchConv_RISCV_Dec(outBuffer, outSize, pc);
+        continue;
+      }
+#endif
+      
+#if !defined(Z7_NO_METHODS_FILTERS) || defined(Z7_USE_FILTER_ARMT)
       {
         if (coder->PropsSize != 0)
           return SZ_ERROR_UNSUPPORTED;
@@ -579,7 +602,8 @@ static SRes SzFolder_Decode2(const CSzFolder *folder,
             z7_BranchConvSt_X86_Dec(outBuffer, outSize, 0, &state); // pc = 0
             break;
           }
-          CASE_BRA_CONV(PPC)
+          case k_PPC: Z7_BRANCH_CONV_DEC_2(BranchConv_PPC)(outBuffer, outSize, 0); break; // pc = 0;
+          // CASE_BRA_CONV(PPC)
           CASE_BRA_CONV(IA64)
           CASE_BRA_CONV(SPARC)
           CASE_BRA_CONV(ARM)
@@ -592,9 +616,9 @@ static SRes SzFolder_Decode2(const CSzFolder *folder,
         }
         continue;
       }
-     #endif
+#endif
     } // (c == 1)
-  #endif
+#endif // Z7_USE_BRANCH_FILTER
     else
       return SZ_ERROR_UNSUPPORTED;
   }

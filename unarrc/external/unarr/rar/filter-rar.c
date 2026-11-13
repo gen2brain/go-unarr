@@ -643,9 +643,8 @@ bool rar_parse_filter(ar_archive_rar *rar, const uint8_t *bytes, uint16_t length
 bool rar_run_filters(ar_archive_rar *rar)
 {
     struct ar_archive_rar_filters *filters = &rar->uncomp.state.v3.filters;
-    struct RARFilter *filter = filters->stack;
     size_t start = filters->filterstart;
-    size_t end = start + filter->blocklength;
+    size_t end = start + filters->stack->blocklength;
     uint32_t lastfilteraddress;
     uint32_t lastfilterlength;
 
@@ -660,6 +659,14 @@ bool rar_run_filters(ar_archive_rar *rar)
         filters->vm = calloc(1, sizeof(*filters->vm));
         if (!filters->vm)
             return false;
+    }
+
+    struct RARFilter *filter = filters->stack;
+
+    if (filter->blocklength > RARProgramMemorySize)
+    {
+        warn("Filter block length exceeds max format size");
+        return false;
     }
 
     lzss_copy_bytes_from_window(&rar->uncomp.lzss, filters->vm->memory, start, filter->blocklength);

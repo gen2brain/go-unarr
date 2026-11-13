@@ -24,10 +24,6 @@ development of unarr, which no longer is maintained.
 ### Prebuilt packages
 [![Packaging status](https://repology.org/badge/vertical-allrepos/unarr.svg)](https://repology.org/metapackage/unarr)
 
-#### From OBS
-[.deb package](https://software.opensuse.org//download.html?project=home%3Aselmf&package=libunarr)
-[.rpm package](https://software.opensuse.org//download.html?project=home%3Aselmf%3Ayacreader-rpm&package=libunarr)
-
 ### Building from source
 
 #### Dependencies
@@ -37,9 +33,6 @@ development of unarr, which no longer is maintained.
 * bzip2
 * xz / libLZMA
 * zlib
-
-More information on what library is used for which purpose can be found in the
-description for embedded builds.
 
 #### CMake
 
@@ -56,12 +49,6 @@ make
 cmake .. -DBUILD_SHARED_LIBS=OFF
 ```
 
-... with 7z support (see note below)
-
-```bash
-cmake .. -DENABLE_7Z=ON
-```
-
 By default, (lib)unarr will try to detect and use system libraries like bzip2,
 xz/LibLZMA and zlib. If this is undesirable, you can override this behavior by
 specifying:
@@ -76,22 +63,28 @@ Install
 make install
 ```
 
-#### Embedded build
+#### Testing
 
-Make sure your compiler is C99 compatible, grab the source code, copy it into
-your project and adjust your build system accordingly.
+Unarr supports unit tests, integration tests and fuzzing.
 
-You can define the following symbols to take advantage of third party libraries:
 
-| Symbol            | Required header | Required for (format/method)|
-|-------------------|:---------------:|:----------------------------|
-|HAVE_ZLIB          |     zlib.h      |  faster CRC-32 and Deflate  |
-|HAVE_BZIP2         |     bzlib.h     |    ZIP / Bzip2              |
-|HAVE_LIBLZMA       |     lzma.h      |    ZIP / LZMA, XZ(LZMA2)    |
-|HAVE_7Z            |     7z.h        |    7Z / LZMA, LZMA2, BCJ    |
-|_7ZIP_PPMD_SUPPPORT|                 |    7Z / PPMd                |
+```bash
+cmake .. -DBUILD_UNIT_TESTS=ON -DBUILD_INTEGRATION_TESTS=ON
+```
 
-Make sure the required headers are present in the include path.
+To build the unit tests, the *cmocka* unit testing framework is required.
+
+Building the integration tests also enables the *unarr-test* executable
+which can be used to run additional tests on user-provided archive files.
+
+Building the fuzzer target will provide a coverage-guided fuzzer based
+on llvm libfuzzer. It should be treated as a stand-alone target.
+
+```bash
+cmake .. -DBUILD_FUZZER=ON
+```
+
+All tests can be run using ctest or their respective executables.
 
 ## Usage
 
@@ -100,10 +93,12 @@ Make sure the required headers are present in the include path.
 Check [unarr.h](unarr.h) and [unarr-test](test/main.c) to get a general feel
 for the api and usage.
 
-To build the unarr-test sample application, use:
+The unarr-test sample application can be used to test archives.
+
+To build it, use:
 
 ```bash
-cmake .. -DBUILD_SAMPLES=ON
+cmake .. -DBUILD_INTEGRATION_TESTS=ON
 ```
 
 ## Limitations
@@ -116,11 +111,14 @@ Unarr was written for comic book archives, so it currently doesn't support:
 
 ### 7z support
 
-7z support is currently limited and has to be explicitly enabled at build time.
-
-This is due to a known performance problem in the ANSI-C based 7z extraction
-code provided by the LZMA SDK that limits its usefulness for large files with
-solid compression (see https://github.com/zeniko/unarr/issues/4).
+7z support for large files with solid compression is currently limited by a
+known performance problem in the ANSI-C based LZMA SDK
+(see https://github.com/zeniko/unarr/issues/4).
 
 Fixing this problem will require modification or replacement of the LZMA SDK
 code used.
+
+### Rar support
+
+RAR5 is currently not supported. There are plans to add this in a future version,
+but as of now this is still work in progress.

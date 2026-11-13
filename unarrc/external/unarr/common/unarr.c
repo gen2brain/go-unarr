@@ -1,7 +1,19 @@
 /* Copyright 2015 the unarr project authors (see AUTHORS file).
    License: LGPLv3 */
 
+#include "unarr.h"
 #include "unarr-imp.h"
+#include <stdint.h>
+
+uint32_t ar_get_version(void)
+{
+    return UNARR_API_VERSION;
+}
+
+const char* ar_get_version_str(void)
+{
+    return UNARR_VERSION;
+}
 
 ar_archive *ar_open_archive(ar_stream *stream, size_t struct_size, ar_archive_close_fn close, ar_parse_entry_fn parse_entry,
                             ar_entry_get_name_fn get_name, ar_entry_uncompress_fn uncompress, ar_get_global_comment_fn get_comment,

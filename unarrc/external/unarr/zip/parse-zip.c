@@ -53,7 +53,7 @@ static bool zip_parse_extra_fields(ar_archive_zip *zip, struct zip_entry *entry)
     for (uint32_t idx = 0; idx + 4 < entry->extralen; idx += 4 + uint16le(&extra[idx + 2])) {
         if (uint16le(&extra[idx]) == 0x0001) {
             uint16_t size = uint16le(&extra[idx + 2]);
-            if (size + idx + 1 > entry->extralen) {
+            if (size + idx + 4 > entry->extralen) {
                 free(extra);
                 return false;
             }

@@ -136,7 +136,7 @@ bool tar_handle_pax_extended(ar_archive *ar)
     line = data;
     while (line < data + size) {
         char *key, *value, *ptr;
-        size_t length, max_size = line - data + size;
+        size_t length, max_size = size - (size_t)(line - data);
 
         ptr = memchr(line, '=', max_size);
         if (!ptr || *line < '1' || '9' < *line) {
