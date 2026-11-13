@@ -1,9 +1,13 @@
 package unarr
 
 import (
+	"archive/zip"
+	"bytes"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -463,4 +467,156 @@ func TestSubdir(t *testing.T) {
 	}
 
 	a.Close()
+}
+
+func TestEmpty(t *testing.T) {
+	for _, b := range [][]byte{nil, {}} {
+		_, err := NewArchiveFromMemory(b)
+		if err != ErrOpenMemory {
+			t.Errorf("expected ErrOpenMemory, got %v", err)
+		}
+	}
+
+	_, err := NewArchiveFromReader(bytes.NewReader(nil))
+	if err != ErrOpenMemory {
+		t.Errorf("expected ErrOpenMemory, got %v", err)
+	}
+}
+
+func TestMemoryOwnership(t *testing.T) {
+	for _, f := range files {
+		d, err := os.ReadFile(filepath.Join("testdata", f))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		a, err := NewArchiveFromMemory(d)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		clear(d)
+		runtime.GC()
+
+		err = a.Entry()
+		if err != nil {
+			t.Errorf("%s: %v", f, err)
+		}
+
+		data, err := a.ReadAll()
+		if err != nil {
+			t.Errorf("%s: %v", f, err)
+		}
+
+		if strings.TrimSpace(string(data)) != "unarr" {
+			t.Errorf("%s: invalid data %q", f, data)
+		}
+
+		a.Close()
+	}
+}
+
+func TestReadBuffer(t *testing.T) {
+	for _, f := range files {
+		a, err := NewArchive(filepath.Join("testdata", f))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = a.Entry()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		n, err := a.Read(nil)
+		if n != 0 || err != nil {
+			t.Errorf("%s: empty buffer: n=%d err=%v", f, n, err)
+		}
+
+		size := a.Size()
+		data := make([]byte, size+100)
+
+		n, err = a.Read(data)
+		if n != size || err != nil {
+			t.Errorf("%s: n=%d err=%v, expected n=%d", f, n, err, size)
+		}
+
+		if strings.TrimSpace(string(data[:n])) != "unarr" {
+			t.Errorf("%s: invalid data %q", f, data[:n])
+		}
+
+		n, err = a.Read(data)
+		if n != 0 || err != io.EOF {
+			t.Errorf("%s: after end: n=%d err=%v", f, n, err)
+		}
+
+		a.Close()
+	}
+}
+
+func TestCloseTwice(t *testing.T) {
+	d, err := os.ReadFile(filepath.Join("testdata", "test.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a, err := NewArchiveFromMemory(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a.Close()
+	a.Close()
+}
+
+func TestExtractUnsafePath(t *testing.T) {
+	var buf bytes.Buffer
+	w := zip.NewWriter(&buf)
+	for _, name := range []string{"../evil1.txt", "/evil2.txt", "a/../../evil3.txt", `..\evil4.txt`} {
+		f, err := w.Create(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.Write([]byte("evil"))
+	}
+	w.Close()
+
+	tmpdir := t.TempDir()
+	dest := filepath.Join(tmpdir, "dest")
+
+	a, err := NewArchiveFromMemory(buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Close()
+
+	_, err = a.Extract(dest)
+	if err != nil && err != ErrUnsafePath {
+		t.Fatal(err)
+	}
+
+	filepath.WalkDir(tmpdir, func(p string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && !strings.HasPrefix(p, dest+string(filepath.Separator)) {
+			t.Errorf("file outside destination: %s", p)
+		}
+
+		return nil
+	})
+}
+
+func TestValidName(t *testing.T) {
+	for name, want := range map[string]string{
+		"../a.txt":          "a.txt",
+		"/a.txt":            "a.txt",
+		"a/../../b.txt":     "b.txt",
+		`..\a.txt`:          "a.txt",
+		`dir\..\..\a.txt`:   "a.txt",
+		"dir/sub/a.txt":     filepath.Join("dir", "sub", "a.txt"),
+		"./dir//a.txt":      filepath.Join("dir", "a.txt"),
+		"../../../../a.txt": "a.txt",
+	} {
+		if got := toValidName(name); got != want {
+			t.Errorf("toValidName(%q) = %q, want %q", name, got, want)
+		}
+	}
 }

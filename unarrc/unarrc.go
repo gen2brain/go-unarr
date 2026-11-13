@@ -22,6 +22,16 @@ func OpenMemory(data unsafe.Pointer, datalen uint) *Stream {
 	return v
 }
 
+// CBytes .
+func CBytes(b []byte) unsafe.Pointer {
+	return C.CBytes(b)
+}
+
+// Free .
+func Free(p unsafe.Pointer) {
+	C.free(p)
+}
+
 // Close .
 func Close(stream *Stream) {
 	cstream := (*C.ar_stream)(unsafe.Pointer(stream))
