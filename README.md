@@ -1,8 +1,7 @@
 # go-unarr
 
 [![Build Status](https://github.com/gen2brain/go-unarr/actions/workflows/test.yml/badge.svg)](https://github.com/gen2brain/go-unarr/actions)
-[![GoDoc](https://godoc.org/github.com/gen2brain/go-unarr?status.svg)](https://godoc.org/github.com/gen2brain/go-unarr)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gen2brain/go-unarr?branch=master)](https://goreportcard.com/report/github.com/gen2brain/go-unarr)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gen2brain/go-unarr.svg)](https://pkg.go.dev/github.com/gen2brain/go-unarr)
 
 > Golang bindings for the [unarr](https://github.com/selmf/unarr) library from sumatrapdf.
 
