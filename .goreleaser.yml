@@ -1,3 +1,5 @@
+version: 2
+
 project_name: unarr
 
 before:
@@ -53,7 +55,7 @@ builds:
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      - CC=x86_64-apple-darwin23.5-clang
+      - CC=x86_64-apple-darwin25.1-clang
     flags: *flags
     ldflags:
       - "-s -w"
@@ -67,7 +69,7 @@ builds:
     main: ./cmd/unarr/unarr.go
     env:
       - CGO_ENABLED=1
-      - CC=aarch64-apple-darwin23.5-clang
+      - CC=aarch64-apple-darwin25.1-clang
     flags: *flags
     ldflags:
       - "-s -w"
@@ -88,9 +90,9 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
     - goos: windows
-      format: zip
+      formats: [zip]
     - goos: darwin
-      format: zip
+      formats: [zip]
     files:
       - README.md
       - LICENSE
@@ -99,7 +101,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
